@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+apt update
+apt upgrade -y
+apt install -y docker.io default-jre
+
+# These variables are passed in via Terraform template interplation
+/opt/consul/bin/run-consul --client --cluster-tag-name "${consul_server_cluster_tag_name}"
+
+if [[ ${nomad_acl_enabled} == "false" ]]; then
+  /opt/nomad/bin/run-nomad --client
+else
+  /opt/nomad/bin/run-nomad --client --enable-acls
+fi

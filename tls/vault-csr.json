@@ -1,0 +1,35 @@
+{
+  "CN": "*.gcp.methridge.com",
+  "hosts": [
+    "127.0.0.1",
+    "*.consul",
+    "vault.service.consul",
+    "*.vault.service.consul",
+    "vault.service.us-west1.consul",
+    "*.vault.service.us-west1.consul",
+    "vault.service.us-central1.consul",
+    "*.vault.service.us-central1.consul",
+    "vault.service.us-east1.consul",
+    "*.vault.service.us-east1.consul",
+    "*.gcp.methridge.com",
+    "*.us-west1.gcp.methridge.com",
+    "*.us-central1.gcp.methridge.com",
+    "*.us-east1.gcp.methridge.com",
+    "lb.us-west1.gcp.methridge.com",
+    "lb.us-central1.gcp.methridge.com",
+    "lb.us-east1.gcp.methridge.com"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "Demo",
+      "OU": "Vault Server",
+      "ST": "California"
+    }
+  ]
+}

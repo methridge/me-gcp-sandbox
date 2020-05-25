@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+/opt/consul/bin/run-consul --client --cluster-tag-name "${consul_cluster_tag_name}"
+
+echo 'export VAULT_ADDR=https://vault.service.consul:8200' | sudo tee -a /etc/profile.d/99-hashicorp.sh
+echo 'export NOMAD_ADDR=http://nomad.service.consul:4646' | sudo tee -a /etc/profile.d/99-hashicorp.sh

@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+
+exec > >(tee /var/log/startup-script.log|logger -t startup-script -s 2>/dev/console) 2>&1
+
+# The Packer template puts the TLS certs in these file paths
+readonly VAULT_TLS_CERT_FILE="/opt/vault/tls/vault.crt.pem"
+readonly VAULT_TLS_KEY_FILE="/opt/vault/tls/vault.key.pem"
+
+# Note that any variables below with <dollar-sign><curly-brace><var-name><curly-brace> are expected to be interpolated by Terraform.
+/opt/consul/bin/run-consul --client --cluster-tag-name "${consul_cluster_tag_name}"
+/opt/vault/bin/run-vault \
+  --tls-cert-file "$VAULT_TLS_CERT_FILE" \
+  --tls-key-file "$VAULT_TLS_KEY_FILE" \
+  --enable-auto-unseal \
+  --auto-unseal-key-project-id "${vault_auto_unseal_key_project_id}" \
+  --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
+  --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
+  --auto-unseal-crypto-key-name "${vault_auto_unseal_crypto_key_name}" \
+  --enable-ui
