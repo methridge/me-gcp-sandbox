@@ -8,3 +8,12 @@
 
 # .tfvars files
 *.tfvars
+
+### PKI Certs ###
+**/*.pem
+**/*.csr
+**/*.pfx
+
+### Sandboxes ###
+# Various Testing Sandboxes
+/Sandboxes
