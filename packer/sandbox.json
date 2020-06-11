@@ -45,12 +45,6 @@
     },
     {
       "type": "shell",
-      "script": "scripts/install-grunt-bash.sh",
-      "pause_before": "5s",
-      "max_retries": 5
-    },
-    {
-      "type": "shell",
       "script": "scripts/install-consul.sh",
       "environment_vars": [
         "CONSUL_PREMIUM={{user `consul_premium`}}",
@@ -84,7 +78,7 @@
     },
     {
       "type": "shell",
-      "script": "scripts/install.sh",
+      "script": "scripts/install-extra.sh",
       "environment_vars": [
         "CONSUL_TEMPLATE_VERSION={{user `consul_template_version`}}",
         "ENVCONSUL_VERSION={{user `envconsul_version`}}",
