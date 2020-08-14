@@ -1,42 +1,60 @@
-# ---------------------------------------------------------------------------------------------------------------------
-# This module has been updated with 0.12 syntax, which means the example is no longer
-# compatible with any versions below 0.12.
-# ---------------------------------------------------------------------------------------------------------------------
-
 terraform {
   required_version = ">= 0.12"
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# CREATE A GCE MANAGED INSTANCE GROUP TO RUN NOMAD
-# ---------------------------------------------------------------------------------------------------------------------
+resource "google_compute_health_check" "nomad_hc" {
+  provider            = google-beta
+  project             = var.gcp_project_id
+  name                = "${var.gcp_region}-${var.cluster_name}-hc"
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 10
+
+  tcp_health_check {
+    port = var.http_port
+  }
+
+  log_config {
+    enable = true
+  }
+}
 
 # Create the Managed Instance Group where Nomad will run.
 resource "google_compute_region_instance_group_manager" "nomad" {
-  project = var.gcp_project_id
-  name    = "${var.cluster_name}-ig"
-
+  project            = var.gcp_project_id
+  region             = var.gcp_region
+  name               = "${var.cluster_name}-ig"
+  target_pools       = var.instance_group_target_pools
+  target_size        = var.cluster_size
   base_instance_name = var.cluster_name
+
   version {
     instance_template = data.template_file.compute_instance_template_self_link.rendered
   }
-  region = var.gcp_region
 
-  # Restarting all Nomad servers at the same time will result in data loss and down time. Therefore, the update strategy
-  # used to roll out a new GCE Instance Template must be a rolling update. But since Terraform does not yet support
-  # ROLLING_UPDATE, such updates must be manually rolled out for now.
-  # update_strategy = var.instance_group_update_strategy
-  update_policy {
-    type                         = "OPPORTUNISTIC"
-    instance_redistribution_type = "PROACTIVE"
-    minimal_action               = "RESTART"
-    max_unavailable_fixed        = 3
-    min_ready_sec                = 50
+  named_port {
+    name = "nomad"
+    port = var.http_port
   }
 
+  auto_healing_policies {
+    health_check      = google_compute_health_check.nomad_hc.self_link
+    initial_delay_sec = var.health_check_delay
+  }
 
-  target_pools = var.instance_group_target_pools
-  target_size  = var.cluster_size
+  update_policy {
+    type                         = "PROACTIVE"
+    instance_redistribution_type = "PROACTIVE"
+    minimal_action               = "REPLACE"
+    max_surge_fixed              = var.cluster_size
+    max_unavailable_fixed        = 0
+    min_ready_sec                = var.health_check_delay
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [
     google_compute_instance_template.nomad_public,
@@ -49,7 +67,7 @@ resource "google_compute_region_instance_group_manager" "nomad" {
 resource "google_compute_instance_template" "nomad_public" {
   count = var.assign_public_ip_addresses ? 1 : 0
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
 
   instance_description = var.cluster_description
@@ -93,10 +111,16 @@ resource "google_compute_instance_template" "nomad_public" {
 
   # For a full list of oAuth 2.0 Scopes, see https://developers.google.com/identity/protocols/googlescopes
   service_account {
-    scopes = [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/compute.readonly",
-    ]
+    email = var.service_account_email
+    scopes = concat(
+      [
+        "cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        var.storage_access_scope
+      ],
+      var.service_account_scopes,
+    )
   }
 
   # Per Terraform Docs (https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#using-with-instance-group-manager),
@@ -112,7 +136,7 @@ resource "google_compute_instance_template" "nomad_public" {
 resource "google_compute_instance_template" "nomad_private" {
   count = var.assign_public_ip_addresses ? 0 : 1
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
   project     = var.gcp_project_id
 
@@ -138,6 +162,8 @@ resource "google_compute_instance_template" "nomad_private" {
     boot         = true
     auto_delete  = true
     source_image = var.source_image
+    disk_size_gb = var.root_volume_disk_size_gb
+    disk_type    = var.root_volume_disk_type
   }
 
   network_interface {
@@ -148,10 +174,16 @@ resource "google_compute_instance_template" "nomad_private" {
 
   # For a full list of oAuth 2.0 Scopes, see https://developers.google.com/identity/protocols/googlescopes
   service_account {
-    scopes = [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/compute.readonly",
-    ]
+    email = var.service_account_email
+    scopes = concat(
+      [
+        "cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        var.storage_access_scope
+      ],
+      var.service_account_scopes,
+    )
   }
 
   # Per Terraform Docs (https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#using-with-instance-group-manager),
@@ -164,27 +196,91 @@ resource "google_compute_instance_template" "nomad_private" {
 
 # ---------------------------------------------------------------------------------------------------------------------
 # CREATE FIREWALL RULES
+# - These Firewall Rules may be redundant depending on the settings of your VPC Network, but if your Network is locked
+#   down, these Rules will open up the appropriate ports.
+# - Note that public access to your Nomad cluster will only be permitted if var.assign_public_ip_addresses is true.
+# - Each Firewall Rule is only created if at least one source tag or source CIDR block for that Firewall Rule is specified.
 # ---------------------------------------------------------------------------------------------------------------------
 
-module "firewall_rules" {
-  source = "../nomad-firewall-rules"
+# Specify which traffic is allowed into the Nomad cluster for inbound HTTP requests
+resource "google_compute_firewall" "allow_inbound_http" {
+  count = length(var.allowed_inbound_cidr_blocks_http) + length(var.allowed_inbound_tags_http) > 0 ? 1 : 0
 
-  cluster_name     = var.cluster_name
-  cluster_tag_name = var.cluster_tag_name
-  gcp_project_id   = var.gcp_project_id
-  network_name     = var.network_name
+  name    = "${var.cluster_name}-rule-external-http-access"
+  network = var.network_name
+  project = var.gcp_project_id
 
-  allowed_inbound_cidr_blocks_http = var.allowed_inbound_cidr_blocks_http
-  allowed_inbound_cidr_blocks_rpc  = var.allowed_inbound_cidr_blocks_rpc
-  allowed_inbound_cidr_blocks_serf = var.allowed_inbound_cidr_blocks_serf
+  allow {
+    protocol = "tcp"
+    ports = [
+      var.http_port,
+    ]
+  }
 
-  allowed_inbound_tags_http = var.allowed_inbound_tags_http
-  allowed_inbound_tags_rpc  = var.allowed_inbound_tags_rpc
-  allowed_inbound_tags_serf = var.allowed_inbound_tags_serf
+  source_ranges = var.allowed_inbound_cidr_blocks_http
+  source_tags   = var.allowed_inbound_tags_http
+  target_tags   = [var.cluster_tag_name]
+}
 
-  http_port = 4646
-  rpc_port  = 4647
-  serf_port = 4648
+# Specify which traffic is allowed into the Nomad cluster for inbound RPC requests
+resource "google_compute_firewall" "allow_inbound_rpc" {
+  count = length(var.allowed_inbound_cidr_blocks_rpc) + length(var.allowed_inbound_tags_rpc) > 0 ? 1 : 0
+
+  name    = "${var.cluster_name}-rule-external-rpc-access"
+  network = var.network_name
+  project = var.gcp_project_id
+
+  allow {
+    protocol = "tcp"
+    ports = [
+      var.rpc_port,
+    ]
+  }
+
+  source_ranges = var.allowed_inbound_cidr_blocks_rpc
+  source_tags   = var.allowed_inbound_tags_rpc
+  target_tags   = [var.cluster_tag_name]
+}
+
+# Specify which traffic is allowed into the Nomad cluster for inbound serf requests
+resource "google_compute_firewall" "allow_inbound_serf" {
+  count = length(var.allowed_inbound_cidr_blocks_serf) + length(var.allowed_inbound_tags_serf) > 0 ? 1 : 0
+
+  name    = "${var.cluster_name}-rule-external-serf-access"
+  network = var.network_name
+  project = var.gcp_project_id
+
+  allow {
+    protocol = "tcp"
+    ports = [
+      var.serf_port,
+    ]
+  }
+
+  allow {
+    protocol = "udp"
+    ports = [
+      var.serf_port,
+    ]
+  }
+
+  source_ranges = var.allowed_inbound_cidr_blocks_serf
+  source_tags   = var.allowed_inbound_tags_serf
+  target_tags   = [var.cluster_tag_name]
+}
+
+resource "google_compute_firewall" "allow_nomad_health_checks" {
+  name    = "${var.cluster_name}-rule-healthcheck-access"
+  network = var.network_name
+  project = var.network_project_id != null ? var.network_project_id : var.gcp_project_id
+
+  allow {
+    protocol = "tcp"
+    ports = [
+      var.http_port,
+    ]
+  }
+  source_ranges = var.gcp_health_check_cidr
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

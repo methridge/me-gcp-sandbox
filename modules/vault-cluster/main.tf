@@ -1,11 +1,28 @@
-# ---------------------------------------------------------------------------------------------------------------------
-# THESE TEMPLATES REQUIRE TERRAFORM VERSION 0.12.0 AND ABOVE
-# This module has been updated with 0.12 syntax, which means the example is no longer
-# compatible with any versions below 0.12.
-# ---------------------------------------------------------------------------------------------------------------------
-
 terraform {
   required_version = ">= 0.12"
+}
+
+data "google_compute_zones" "available" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
+resource "google_compute_health_check" "vault_hc" {
+  provider            = google-beta
+  project             = var.gcp_project_id
+  name                = "${var.gcp_region}-${var.cluster_name}-hc"
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 10
+
+  ssl_health_check {
+    port = var.api_port
+  }
+
+  log_config {
+    enable = true
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -52,30 +69,41 @@ resource "google_project_iam_member" "other_sa_view_project" {
 
 # Create the single-zone Managed Instance Group where Vault will run.
 resource "google_compute_region_instance_group_manager" "vault" {
-  name = "${var.cluster_name}-ig"
-
-  project = var.gcp_project_id
-
+  project            = var.gcp_project_id
+  region             = var.gcp_region
+  name               = "${var.cluster_name}-ig"
   base_instance_name = var.cluster_name
+
   version {
     instance_template = data.template_file.compute_instance_template_self_link.rendered
+    name              = "${var.cluster_name}-vault-${var.vault_cluster_version}"
   }
-  region = var.gcp_region
 
-  # Restarting a Vault server has an important consequence: The Vault server has to be manually unsealed again. Therefore,
-  # the update strategy used to roll out a new GCE Instance Template must be a rolling update. But since Terraform does
-  # not yet support ROLLING_UPDATE, such updates must be manually rolled out for now.
-  # update_strategy = var.instance_group_update_strategy
+  named_port {
+    name = "vault"
+    port = var.api_port
+  }
+
   update_policy {
-    type                         = "OPPORTUNISTIC"
+    type                         = "PROACTIVE"
     instance_redistribution_type = "PROACTIVE"
-    minimal_action               = "RESTART"
-    max_unavailable_fixed        = 3
-    min_ready_sec                = 50
+    minimal_action               = "REPLACE"
+    max_surge_fixed              = (var.cluster_size >= length(data.google_compute_zones.available.names)) ? var.cluster_size : length(data.google_compute_zones.available.names)
+    max_unavailable_fixed        = 0
+    min_ready_sec                = var.health_check_delay
   }
 
   target_pools = var.instance_group_target_pools
   target_size  = var.cluster_size
+
+  auto_healing_policies {
+    health_check      = google_compute_health_check.vault_hc.self_link
+    initial_delay_sec = var.health_check_delay
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [
     google_compute_instance_template.vault_public,
@@ -88,7 +116,7 @@ resource "google_compute_region_instance_group_manager" "vault" {
 resource "google_compute_instance_template" "vault_public" {
   count = var.assign_public_ip_addresses ? 1 : 0
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
   project     = var.gcp_project_id
 
@@ -113,7 +141,7 @@ resource "google_compute_instance_template" "vault_public" {
   disk {
     boot         = true
     auto_delete  = true
-    source_image = data.google_compute_image.image.self_link
+    source_image = var.source_image
     disk_size_gb = var.root_volume_disk_size_gb
     disk_type    = var.root_volume_disk_type
   }
@@ -136,10 +164,10 @@ resource "google_compute_instance_template" "vault_public" {
     email = local.service_account_email
     scopes = concat(
       [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/compute",
-        "https://www.googleapis.com/auth/devstorage.read_write",
-        "https://www.googleapis.com/auth/cloud-platform",
+        "cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        var.storage_access_scope
       ],
       var.service_account_scopes,
     )
@@ -158,7 +186,7 @@ resource "google_compute_instance_template" "vault_public" {
 resource "google_compute_instance_template" "vault_private" {
   count = var.assign_public_ip_addresses ? 0 : 1
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
   project     = var.gcp_project_id
 
@@ -182,7 +210,7 @@ resource "google_compute_instance_template" "vault_private" {
   disk {
     boot         = true
     auto_delete  = true
-    source_image = data.google_compute_image.image.self_link
+    source_image = var.source_image
     disk_size_gb = var.root_volume_disk_size_gb
     disk_type    = var.root_volume_disk_type
   }
@@ -198,10 +226,10 @@ resource "google_compute_instance_template" "vault_private" {
     email = local.service_account_email
     scopes = concat(
       [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/compute",
-        "https://www.googleapis.com/auth/devstorage.read_write",
-        "https://www.googleapis.com/auth/cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        "storage-ro",
+        "cloud-platform",
       ],
       var.service_account_scopes,
     )
@@ -264,29 +292,18 @@ resource "google_compute_firewall" "allow_inbound_api" {
   target_tags   = [var.cluster_tag_name]
 }
 
-# If we require a Load Balancer in front of the Vault cluster, we must specify a Health Check so that the Load Balancer
-# knows which nodes to route to. But GCP only permits HTTP Health Checks, not HTTPS Health Checks (https://github.com/terraform-providers/terraform-provider-google/issues/18)
-# so we must run a separate Web Proxy that forwards HTTP requests to the HTTPS Vault health check endpoint. This Firewall
-# Rule permits only the Google Cloud Health Checker to make such requests.
-resource "google_compute_firewall" "allow_inbound_health_check" {
-  count = var.enable_web_proxy ? 1 : 0
-
-  name    = "${var.cluster_name}-rule-health-check"
+resource "google_compute_firewall" "allow_vault_health_checks" {
+  name    = "${var.cluster_name}-rule-healthcheck-access"
   network = var.network_name
-
   project = var.network_project_id != null ? var.network_project_id : var.gcp_project_id
 
   allow {
     protocol = "tcp"
-
     ports = [
-      var.web_proxy_port,
+      var.api_port,
     ]
   }
-
-  # Per https://goo.gl/xULu8U, all Google Cloud Health Check requests will be sent from 35.191.0.0/16
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
-  target_tags   = [var.cluster_tag_name]
+  source_ranges = var.gcp_health_check_cidr
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -311,13 +328,6 @@ data "template_file" "compute_instance_template_self_link" {
     ),
     0,
   )
-}
-
-# This is a workaround for a provider bug in Terraform v0.11.8. For more information please refer to:
-# https://github.com/terraform-providers/terraform-provider-google/issues/2067.
-data "google_compute_image" "image" {
-  name    = var.source_image
-  project = var.image_project_id != null ? var.image_project_id : var.gcp_project_id
 }
 
 # This is a work around so we don't have yet another combination of google_compute_instance_template

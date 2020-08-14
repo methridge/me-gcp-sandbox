@@ -37,23 +37,3 @@ output "firewall_rule_allow_inbound_api_url" {
 output "firewall_rule_allow_inbound_api_id" {
   value = google_compute_firewall.allow_inbound_api.*.id
 }
-
-output "firewall_rule_allow_inbound_health_check_url" {
-  value = element(
-    concat(
-      google_compute_firewall.allow_inbound_health_check.*.self_link,
-      [""],
-    ),
-    0,
-  )
-}
-
-output "firewall_rule_allow_inbound_health_check_id" {
-  value = element(
-    concat(
-      google_compute_firewall.allow_inbound_health_check.*.id,
-      [""],
-    ),
-    0,
-  )
-}

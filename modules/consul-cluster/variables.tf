@@ -23,6 +23,11 @@ variable "cluster_tag_name" {
   type        = string
 }
 
+variable "consul_cluster_version" {
+  default     = "0-0-1"
+  description = "Custom Version Tag for Upgrade Migrations"
+}
+
 variable "machine_type" {
   description = "The machine type of the Compute Instance to run for each node in the cluster (e.g. n1-standard-1)."
   type        = string
@@ -142,6 +147,30 @@ variable "allowed_inbound_tags_dns" {
   description = "A list of tags from which the Compute Instances will allow TCP DNS and UDP DNS connections to Consul."
   type        = list(string)
   default     = []
+}
+
+variable "gcp_health_check_cidr" {
+  description = "Google Healthcheck IP Ranges"
+  type        = list(string)
+  default     = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+}
+
+variable "consul_health_check_path" {
+  description = "Consul Health Check"
+  type        = string
+  default     = "/v1/operator/autopilot/health"
+}
+
+variable "health_check_delay" {
+  description = "Health check delay"
+  type        = string
+  default     = "150"
+}
+
+variable "cooldown_period" {
+  description = "Node Cooldown time"
+  type        = string
+  default     = "480"
 }
 
 # Metadata

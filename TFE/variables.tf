@@ -30,7 +30,7 @@ variable "project" {
 variable "region" {
   type        = string
   description = "The region to install into."
-  default     = "us-central1"
+  default     = ""
 }
 
 variable "labels" {

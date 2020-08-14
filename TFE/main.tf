@@ -19,7 +19,7 @@ data "google_netblock_ip_ranges" "gcp_ranges" {}
 resource "google_compute_firewall" "lb-healthchecks" {
   name          = "${var.namespace}-lb-healthcheck-firewall"
   network       = data.terraform_remote_state.vpc.outputs.sandbox-network
-  source_ranges = concat([data.terraform_remote_state.vpc.outputs.sandbox-subnet-central1-cidr], var.healthcheck_ips)
+  source_ranges = concat([data.terraform_remote_state.vpc.outputs.sandbox-subnet-region-1-cidr], var.healthcheck_ips)
 
   allow {
     protocol = "tcp"
@@ -27,7 +27,7 @@ resource "google_compute_firewall" "lb-healthchecks" {
 }
 
 module "external-services" {
-  source = "github.com/methridge/is-terraform-google-tfe-standalone//modules/external-services?ref=v0.0.3"
+  source = "github.com/hashicorp/is-terraform-google-tfe-standalone//modules/external-services"
 
   namespace   = var.namespace
   network     = data.terraform_remote_state.vpc.outputs.sandbox-network
@@ -36,7 +36,7 @@ module "external-services" {
 }
 
 module "configs" {
-  source = "github.com/methridge/is-terraform-google-tfe-standalone//modules/configs?ref=v0.0.3"
+  source = "github.com/hashicorp/is-terraform-google-tfe-standalone//modules/configs"
 
   license_file        = var.tfe_license_file
   hostname            = "${var.subdomain}.${var.hostname}"
@@ -46,7 +46,7 @@ module "configs" {
 }
 
 module "tfe" {
-  source = "github.com/methridge/is-terraform-google-tfe-standalone//modules/tfe?ref=v0.0.3"
+  source = "github.com/hashicorp/is-terraform-google-tfe-standalone//modules/tfe"
 
   namespace      = var.namespace
   region         = var.region
@@ -64,12 +64,12 @@ module "tfe" {
 
   networking_config = {
     network    = data.terraform_remote_state.vpc.outputs.sandbox-network
-    subnetwork = data.terraform_remote_state.vpc.outputs.sandbox-subnet-central1
+    subnetwork = data.terraform_remote_state.vpc.outputs.sandbox-subnet-region-1
   }
 }
 
 module "load-balancer" {
-  source = "github.com/methridge/is-terraform-google-tfe-standalone//modules/load-balancer?ref=v0.0.3"
+  source = "github.com/hashicorp/is-terraform-google-tfe-standalone//modules/load-balancer"
 
   namespace      = var.namespace
   instance_group = module.tfe.instance_group

@@ -12,25 +12,25 @@ module "vpc" {
 
   subnets = [
     {
-      subnet_name           = "${var.username}-sandbox-subnet-west1"
-      subnet_ip             = var.subnet-west1
-      subnet_region         = "us-west1"
+      subnet_name           = "${var.username}-sandbox-subnet-region-1"
+      subnet_ip             = var.subnet-region-1
+      subnet_region         = var.region-name-1
       subnet_private_access = "true"
-      description           = "US West 1 region Sandbox subnet"
+      description           = "First region sandbox subnet"
     },
     {
-      subnet_name           = "${var.username}-sandbox-subnet-central1"
-      subnet_ip             = var.subnet-central1
-      subnet_region         = "us-central1"
+      subnet_name           = "${var.username}-sandbox-subnet-region-2"
+      subnet_ip             = var.subnet-region-2
+      subnet_region         = var.region-name-2
       subnet_private_access = "true"
-      description           = "US Central 1 region Sandbox subnet"
+      description           = "Second region sandbox subnet"
     },
     {
-      subnet_name           = "${var.username}-sandbox-subnet-east1"
-      subnet_ip             = var.subnet-east1
-      subnet_region         = "us-east1"
+      subnet_name           = "${var.username}-sandbox-subnet-region-3"
+      subnet_ip             = var.subnet-region-3
+      subnet_region         = var.region-name-3
       subnet_private_access = "true"
-      description           = "US East 1 region Sandbox subnet"
+      description           = "Third region sandbox subnet"
     }
   ]
 
@@ -45,58 +45,58 @@ module "vpc" {
   ]
 }
 
-module "us-west1-cloud_router" {
+module "first_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
   version = "~> 0.1"
   project = var.project
   network = module.vpc.network_name
-  region  = "us-west1"
-  name    = "${var.username}-sandbox-us-west1-router"
+  region  = var.region-name-1
+  name    = "${var.username}-sandbox-${var.region-name-1}-router"
 }
 
-module "us-west1-cloud-nat" {
+module "first_region_cloud_nat" {
   source     = "terraform-google-modules/cloud-nat/google"
   version    = "~> 1.3.0"
   project_id = var.project
-  router     = module.us-west1-cloud_router.router.name
-  region     = "us-west1"
-  name       = "${var.username}-sandbox-us-west1-cloud-nat"
+  router     = module.first_region_cloud_router.router.name
+  region     = var.region-name-1
+  name       = "${var.username}-sandbox-${var.region-name-1}-cloud-nat"
 }
 
-module "us-central1-cloud_router" {
+module "second_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
   version = "~> 0.1"
   project = var.project
   network = module.vpc.network_name
-  region  = "us-central1"
-  name    = "${var.username}-sandbox-us-central1-router"
+  region  = var.region-name-2
+  name    = "${var.username}-sandbox-${var.region-name-2}-router"
 }
 
-module "us-central1-cloud-nat" {
+module "second_region_cloud_nat" {
   source     = "terraform-google-modules/cloud-nat/google"
   version    = "~> 1.3.0"
   project_id = var.project
-  router     = module.us-central1-cloud_router.router.name
-  region     = "us-central1"
-  name       = "${var.username}-sandbox-us-central1-cloud-nat"
+  router     = module.second_region_cloud_router.router.name
+  region     = var.region-name-2
+  name       = "${var.username}-sandbox-${var.region-name-2}-cloud-nat"
 }
 
-module "us-east1-cloud_router" {
+module "third_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
   version = "~> 0.1"
   project = var.project
   network = module.vpc.network_name
-  region  = "us-east1"
-  name    = "${var.username}-sandbox-us-east1-router"
+  region  = var.region-name-3
+  name    = "${var.username}-sandbox-${var.region-name-3}-router"
 }
 
-module "us-east1-cloud-nat" {
+module "third_region_cloud-nat" {
   source     = "terraform-google-modules/cloud-nat/google"
   version    = "~> 1.3.0"
   project_id = var.project
-  router     = module.us-east1-cloud_router.router.name
-  region     = "us-east1"
-  name       = "${var.username}-sandbox-us-east1-cloud-nat"
+  router     = module.third_region_cloud_router.router.name
+  region     = var.region-name-3
+  name       = "${var.username}-sandbox-${var.region-name-3}-cloud-nat"
 }
 
 # data "google_netblock_ip_ranges" "gcp_ranges" {}
