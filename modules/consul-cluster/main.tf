@@ -1,10 +1,4 @@
-# ---------------------------------------------------------------------------------------------------------------------
-# THESE TEMPLATES REQUIRE TERRAFORM VERSION 0.12.0 AND ABOVE
-# ---------------------------------------------------------------------------------------------------------------------
-
 terraform {
-  # The modules has been updated with 0.12 syntax, which means the example is no longer
-  # compatible with any versions below 0.12.
   required_version = ">= 0.12"
 }
 
@@ -12,30 +6,60 @@ terraform {
 # CREATE A REGIONAL MANAGED INSTANCE GROUP TO RUN CONSUL SERVER
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Create Consul Health Check
+resource "google_compute_health_check" "consul_hc" {
+  provider            = google-beta
+  project             = var.gcp_project_id
+  name                = "${var.gcp_region}-${var.cluster_name}-hc"
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 10
+
+  tcp_health_check {
+    port = var.http_api_port
+  }
+
+  log_config {
+    enable = true
+  }
+}
+
 # Create the Regional Managed Instance Group where Consul Server will live.
 resource "google_compute_region_instance_group_manager" "consul_server" {
-  project = var.gcp_project_id
-  name    = "${var.cluster_name}-ig"
-
+  project            = var.gcp_project_id
+  region             = var.gcp_region
+  name               = "${var.cluster_name}-ig"
+  target_pools       = var.instance_group_target_pools
+  target_size        = var.cluster_size
   base_instance_name = var.cluster_name
+
   version {
     instance_template = data.template_file.compute_instance_template_self_link.rendered
   }
-  region = var.gcp_region
 
-  # Consul Server is a stateful cluster, so the update strategy used to roll out a new GCE Instance Template must be
-  # a rolling update. But since Terraform does not yet support ROLLING_UPDATE, such updates must be manually rolled out.
-  # update_strategy = var.instance_group_update_strategy
-  update_policy {
-    type                         = "OPPORTUNISTIC"
-    instance_redistribution_type = "PROACTIVE"
-    minimal_action               = "RESTART"
-    max_unavailable_fixed        = 3
-    min_ready_sec                = 50
+  named_port {
+    name = "consul"
+    port = var.http_api_port
   }
 
-  target_pools = var.instance_group_target_pools
-  target_size  = var.cluster_size
+  auto_healing_policies {
+    health_check      = google_compute_health_check.consul_hc.self_link
+    initial_delay_sec = var.health_check_delay
+  }
+
+  update_policy {
+    type                         = "PROACTIVE"
+    instance_redistribution_type = "PROACTIVE"
+    minimal_action               = "REPLACE"
+    max_surge_fixed              = var.cluster_size
+    max_unavailable_fixed        = 0
+    min_ready_sec                = var.health_check_delay
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [
     google_compute_instance_template.consul_server_public,
@@ -49,7 +73,7 @@ resource "google_compute_instance_template" "consul_server_public" {
   project = var.gcp_project_id
   count   = var.assign_public_ip_addresses ? 1 : 0
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
 
   instance_description = var.cluster_description
@@ -73,7 +97,7 @@ resource "google_compute_instance_template" "consul_server_public" {
   disk {
     boot         = true
     auto_delete  = true
-    source_image = data.google_compute_image.image.self_link
+    source_image = var.source_image
     disk_size_gb = var.root_volume_disk_size_gb
     disk_type    = var.root_volume_disk_type
   }
@@ -93,7 +117,12 @@ resource "google_compute_instance_template" "consul_server_public" {
   service_account {
     email = var.service_account_email
     scopes = concat(
-      ["userinfo-email", "compute-ro", var.storage_access_scope],
+      [
+        "cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        var.storage_access_scope
+      ],
       var.service_account_scopes,
     )
   }
@@ -113,7 +142,7 @@ resource "google_compute_instance_template" "consul_server_private" {
 
   project = var.gcp_project_id
 
-  name_prefix = var.cluster_name
+  name_prefix = "${var.cluster_name}-"
   description = var.cluster_description
 
   instance_description    = var.cluster_description
@@ -136,7 +165,7 @@ resource "google_compute_instance_template" "consul_server_private" {
   disk {
     boot         = true
     auto_delete  = true
-    source_image = data.google_compute_image.image.self_link
+    source_image = var.source_image
     disk_size_gb = var.root_volume_disk_size_gb
     disk_type    = var.root_volume_disk_type
   }
@@ -150,14 +179,16 @@ resource "google_compute_instance_template" "consul_server_private" {
   service_account {
     email = var.service_account_email
     scopes = concat(
-      ["userinfo-email", "compute-ro", var.storage_access_scope],
+      [
+        "cloud-platform",
+        "userinfo-email",
+        "compute-rw",
+        var.storage_access_scope
+      ],
       var.service_account_scopes,
     )
   }
 
-  # Per Terraform Docs (https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#using-with-instance-group-manager),
-  # we need to create a new instance template before we can destroy the old one. Note that any Terraform resource on
-  # which this Terraform resource depends will also need this lifecycle statement.
   lifecycle {
     create_before_destroy = true
   }
@@ -263,6 +294,20 @@ resource "google_compute_firewall" "allow_inbound_dns" {
   target_tags   = [var.cluster_tag_name]
 }
 
+resource "google_compute_firewall" "allow_consul_health_checks" {
+  name    = "${var.cluster_name}-rule-healthcheck-access"
+  network = var.network_name
+  project = var.network_project_id != null ? var.network_project_id : var.gcp_project_id
+
+  allow {
+    protocol = "tcp"
+    ports = [
+      var.http_api_port,
+    ]
+  }
+  source_ranges = var.gcp_health_check_cidr
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # CONVENIENCE VARIABLES
 # Because we've got some conditional logic in this template, some values will depend on our properties. This section
@@ -285,11 +330,4 @@ data "template_file" "compute_instance_template_self_link" {
     ),
     0,
   )
-}
-
-# This is a workaround for a provider bug in Terraform v0.11.8. For more information please refer to:
-# https://github.com/terraform-providers/terraform-provider-google/issues/2067.
-data "google_compute_image" "image" {
-  name    = var.source_image
-  project = var.image_project_id != null ? var.image_project_id : var.gcp_project_id
 }

@@ -1,17 +1,66 @@
 #!/bin/bash
 set -e
 
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+exec > >(tee /var/log/startup-script.log|logger -t startup-script -s 2>/dev/console) 2>&1
+
+export DEBIAN_FRONTEND=noninteractive
 
 apt update
 apt upgrade -y
 apt install -y docker.io default-jre
 
-# These variables are passed in via Terraform template interplation
-/usr/local/bin/run-consul --client --cluster-tag-name "${consul_server_cluster_tag_name}"
+mkdir /tmp/files
+while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-tls/consul-agent-ca.pem ]]; do
+  echo 'Waiting for Consul TLS Files'
+  /snap/bin/gsutil -m rsync -r gs://${config_bucket} /tmp/files/
+  sleep 5
+done
+chmod +x /tmp/files/*.sh
 
-if [[ "${nomad_acl_enabled}" == "true" ]] ; then
-  /usr/local/bin/run-nomad --client --enable-acls
-else
-  /usr/local/bin/run-nomad --client
-fi
+/tmp/files/boot-hashistack.sh \
+  --prem-bucket "${prem_bucket}" \
+  --consul-mode "${consul_mode}" \
+  --consul-version "${consul_version}" \
+  --consul-ent "${consul_ent}" \
+  --consul-prem "${consul_prem}" \
+  --consul-cluster-tag-name "${consul_cluster_tag_name}" \
+  --vault-mode "${vault_mode}" \
+  --vault-storage "${vault_storage}" \
+  --vault-version "${vault_version}" \
+  --vault-ent "${vault_ent}" \
+  --vault-prem "${vault_prem}" \
+  --auto-unseal-key-project-id "${vault_auto_unseal_key_project_id}" \
+  --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
+  --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
+  --auto-unseal-crypto-key-name "${vault_auto_unseal_crypto_key_name}" \
+  --nomad-mode "${nomad_mode}" \
+  --nomad-version "${nomad_version}" \
+  --nomad-ent "${nomad_ent}" \
+  --nomad-prem "${nomad_prem}" \
+  --nomad-num-servers "${nomad_num_servers}" \
+  --nomad-cluster-tag-name "${nomad_cluster_tag_name}" \
+  --nomad-acl-enabled "${nomad_acl_enabled}" \
+  --consul-template "${consul_template_ver}" \
+  --envconsul "${envconsul_ver}" \
+  --terraform "${terraform_ver}" \
+  --elk-stack "${elk_stack}"
+
+# Install CNI
+curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
+sudo mkdir -p /opt/cni/bin
+sudo tar -C /opt/cni/bin -xzf /tmp/cni-plugins.tgz
+
+sleep 5
+
+sudo systemctl restart nomad
+
+sleep 5
+
+# Bridging
+echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-arptables
+echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-ip6tables
+echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
+
+sleep 5
+
+sudo systemctl restart nomad

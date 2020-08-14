@@ -1,0 +1,5 @@
+# Enable forward lookup of the '$consul_domain' domain:
+server=/consul/127.0.0.1#8600
+
+listen-address=127.0.0.1
+bind-interfaces
