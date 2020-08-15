@@ -1,0 +1,22 @@
+[Unit]
+Description="HashiCorp Nomad - Workload Orchestration Made Easy"
+Documentation=https://www.nomadproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/nomad.d/nomad.hcl
+
+[Service]
+ExecStart=/usr/local/bin/nomad agent -config /etc/nomad.d
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+RestartSec=2
+StartLimitBurst=3
+StartLimitIntervalSec=10
+TasksMax=infinity
+Restart=on-failure
+LimitNOFILE=infinity
+LimitNPROC=infinity
+
+[Install]
+WantedBy=multi-user.target

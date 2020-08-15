@@ -150,6 +150,34 @@ data "template_file" "region-consul-server-startup-script" {
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
 
+# ###
+# ### Consul Config files
+# ###
+# module "consul_server_config" {
+#   source                        = "../../../consul-config"
+#   enable_node_metadata          = true
+#   configure_autopilot           = true
+#   autopilot_redundancy_zone_tag = "zone"
+#   server                        = true
+# }
+
+# resource "google_storage_bucket_object" "consul_server_config_template" {
+#   name    = "consul/${var.region}/consul-server.tmpl"
+#   content = module.consul_server_config.config
+#   bucket  = "sandbox-bin"
+# }
+
+# module "consul_client_config" {
+#   source               = "../../../consul-config"
+#   enable_node_metadata = true
+# }
+
+# resource "google_storage_bucket_object" "consul_client_config_template" {
+#   name    = "consul/${var.region}/consul-client.tmpl"
+#   content = module.consul_client_config.config
+#   bucket  = "sandbox-bin"
+# }
+
 ###
 ### Nomad Server Cluster
 ###

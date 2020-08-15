@@ -1,0 +1,65 @@
+- name: Download Consul Template
+  get_url:
+    url:
+      "https://releases.hashicorp.com/consul-template/{{ consul_template_version
+      }}/consul-template_{{ consul_template_version }}_linux_amd64.zip"
+    dest: "/tmp/consul-template_{{ consul_template_version }}_linux_amd64.zip"
+    checksum:
+      "sha256:https://releases.hashicorp.com/consul-template/{{
+      consul_template_version }}/consul-template_{{ consul_template_version
+      }}_SHA256SUMS"
+
+- name: Unarchive Consul Template
+  unarchive:
+    src: "/tmp/consul-template_{{ consul_template_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Download EnvConsul
+  get_url:
+    url:
+      "https://releases.hashicorp.com/envconsul/{{ envconsul_version
+      }}/envconsul_{{ envconsul_version }}_linux_amd64.zip"
+    dest: "/tmp/envconsul_{{ envconsul_version }}_linux_amd64.zip"
+    checksum:
+      "sha256:https://releases.hashicorp.com/envconsul/{{ envconsul_version
+      }}/envconsul_{{ envconsul_version }}_SHA256SUMS"
+
+- name: Unarchive EnvConsul
+  unarchive:
+    src: "/tmp/envconsul_{{ envconsul_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Download Terraform
+  get_url:
+    url:
+      "https://releases.hashicorp.com/terraform/{{ terraform_version
+      }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+    dest: "/tmp/terraform_{{ terraform_version }}_linux_amd64.zip"
+    checksum:
+      "sha256:https://releases.hashicorp.com/terraform/{{ terraform_version
+      }}/terraform_{{ terraform_version }}_SHA256SUMS"
+
+- name: Unarchive Terraform
+  unarchive:
+    src: "/tmp/terraform_{{ terraform_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Copy Vault CA Cert
+  copy:
+    src: "ca.pem"
+    dest: "/usr/local/share/ca-certificates/custom.crt"
+    owner: root
+    group: root
+    mode: "0444"
+
+- name: update trusted ca
+  shell: /usr/sbin/update-ca-certificates

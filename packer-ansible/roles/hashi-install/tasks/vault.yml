@@ -1,0 +1,69 @@
+- name: Download Vault
+  get_url:
+    url:
+      "https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{
+      vault_version }}_linux_amd64.zip"
+    dest: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    checksum:
+      "sha256:https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{
+      vault_version }}_SHA256SUMS"
+
+- name: Unarchive Vault
+  unarchive:
+    src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Setup Vault autocompletion
+  copy:
+    content: complete -C "/usr/local/bin/vault" "vault"
+    dest: "/etc/profile.d/99-vault-completion.sh"
+    mode: "0644"
+
+- name: Create Vault user
+  user:
+    name: vault
+    system: yes
+    shell: /bin/false
+    home: /etc/vault.d
+    create_home: no
+    append: yes
+
+- name: Create Vault TLS directory
+  file:
+    path: /etc/vault.d/tls
+    state: directory
+    owner: vault
+    group: vault
+    mode: "0700"
+
+- name: Create Vault data directory
+  file:
+    path: /opt/vault
+    state: directory
+    owner: vault
+    group: vault
+    mode: "0700"
+
+- name: Install Vault systemd unit
+  template:
+    src: etc/systemd/system/vault.service.j2
+    dest: /etc/systemd/system/vault.service
+
+- name: Set cap_sys_chroot+ep on Vault
+  capabilities:
+    path: /usr/local/bin/vault
+    capability: cap_ipc_lock=+ep
+    state: present
+
+- name: Copy Vault CA Cert
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/vault.d/tls/"
+    owner: vault
+    group: vault
+    mode: "0400"
+  with_fileglob:
+    - "*.pem"
