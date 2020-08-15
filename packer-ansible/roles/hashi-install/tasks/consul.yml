@@ -1,0 +1,112 @@
+- name: Download Consul
+  get_url:
+    url:
+      "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{
+      consul_version }}_linux_amd64.zip"
+    dest: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+    checksum:
+      "sha256:https://releases.hashicorp.com/consul/{{ consul_version
+      }}/consul_{{ consul_version }}_SHA256SUMS"
+
+- name: Unarchive Consul
+  unarchive:
+    src: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Setup Consul autocompletion
+  copy:
+    content: complete -C "/usr/local/bin/consul" "consul"
+    dest: /etc/profile.d/99-consul-completion.sh
+    mode: "0644"
+
+- name: Create Consul user
+  user:
+    name: consul
+    system: yes
+    shell: /bin/false
+    home: "{{ consul_config_home }}"
+    create_home: no
+    append: yes
+
+- name: Create Consul configuration and TLS directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: consul
+    group: consul
+    mode: "0750"
+  with_items:
+    - "{{ consul_config_home }}"
+    - "{{ consul_config_home }}/tls"
+
+- name: Create Consul data directory
+  file:
+    path: /opt/consul
+    state: directory
+    owner: consul
+    group: consul
+    mode: "0700"
+
+- name: Install Consul systemd unit
+  template:
+    src: etc/systemd/system/consul.service.j2
+    dest: /etc/systemd/system/consul.service
+
+- name: Install Dnsmasq
+  apt:
+    name: dnsmasq
+    state: present
+    update_cache: true
+  register: pkg_dnsmasq
+  retries: 12
+  delay: 20
+  until: pkg_dnsmasq is success
+
+- name: Install dnsmasq configuration
+  template:
+    src: etc/dnsmasq.d/10-consul.j2
+    dest: /etc/dnsmasq.d/10-consul
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install resolvconf
+  apt:
+    name: resolvconf
+    state: present
+    update_cache: true
+  register: pkg_resolvconf
+  retries: 12
+  delay: 20
+  until: pkg_resolvconf is success
+
+- name: Create resolvconf directory
+  file:
+    path: /etc/resolvconf/resolv.conf
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install resolvconf configuration
+  template:
+    src: etc/resolvconf/resolv.conf/head.j2
+    dest: /etc/resolvconf/resolv.conf/head
+
+- name: enable resolvconf service
+  systemd:
+    name: resolvconf
+    enabled: yes
+    masked: no
+    state: started
+
+- name: Copy run-consul.sh
+  copy:
+    src: "run-consul.sh"
+    dest: "/usr/local/bin/"
+    owner: root
+    group: root
+    mode: "0755"

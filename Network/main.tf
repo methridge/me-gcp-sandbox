@@ -1,11 +1,11 @@
 provider "google" {
-  version     = "~> 3.19"
+  version     = ">= 3.19"
   credentials = file(var.creds)
 }
 
 module "vpc" {
   source       = "terraform-google-modules/network/google"
-  version      = "~> 2.3"
+  version      = ">= 2.3"
   description  = "${var.username} Sandbox Network"
   project_id   = var.project
   network_name = "${var.username}-sandbox-network"
@@ -47,7 +47,7 @@ module "vpc" {
 
 module "first_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
-  version = "~> 0.1"
+  version = ">= 0.1"
   project = var.project
   network = module.vpc.network_name
   region  = var.region-name-1
@@ -56,7 +56,7 @@ module "first_region_cloud_router" {
 
 module "first_region_cloud_nat" {
   source     = "terraform-google-modules/cloud-nat/google"
-  version    = "~> 1.3.0"
+  version    = ">= 1.3.0"
   project_id = var.project
   router     = module.first_region_cloud_router.router.name
   region     = var.region-name-1
@@ -65,7 +65,7 @@ module "first_region_cloud_nat" {
 
 module "second_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
-  version = "~> 0.1"
+  version = ">= 0.1"
   project = var.project
   network = module.vpc.network_name
   region  = var.region-name-2
@@ -74,7 +74,7 @@ module "second_region_cloud_router" {
 
 module "second_region_cloud_nat" {
   source     = "terraform-google-modules/cloud-nat/google"
-  version    = "~> 1.3.0"
+  version    = ">= 1.3.0"
   project_id = var.project
   router     = module.second_region_cloud_router.router.name
   region     = var.region-name-2
@@ -83,7 +83,7 @@ module "second_region_cloud_nat" {
 
 module "third_region_cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
-  version = "~> 0.1"
+  version = ">= 0.1"
   project = var.project
   network = module.vpc.network_name
   region  = var.region-name-3
@@ -92,7 +92,7 @@ module "third_region_cloud_router" {
 
 module "third_region_cloud-nat" {
   source     = "terraform-google-modules/cloud-nat/google"
-  version    = "~> 1.3.0"
+  version    = ">= 1.3.0"
   project_id = var.project
   router     = module.third_region_cloud_router.router.name
   region     = var.region-name-3

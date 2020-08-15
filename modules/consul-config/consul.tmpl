@@ -1,0 +1,99 @@
+%{~ if enable_acls ~}
+acl {
+  enabled = true
+%{ if default_acl_policy != "" }  default_policy = "${default_acl_policy}"%{ endif }
+%{ if enable_acl_token_persistence }  enable_token_persistence = true%{ endif}
+%{ if enable_acl_tokens }
+  tokens {
+%{ if master_token != "" }    master = "${master_token}"%{ endif }
+%{ if agent_token != "" }    agent = "${agent_token}"%{ endif }
+%{ if replication_token != "" }    replication = "${replication_token}"%{ endif }
+  }
+%{ endif }
+}
+%{ endif }
+advertise_addr = "$INSTANCE_IP"
+%{ if enable_audit }
+audit {
+  enabled = true
+  sink "Audit Sync" {
+    type               = "file"
+    format             = "json"
+    path               = "${audit_file}"
+    delivery_guarantee = "best-effort"
+    rotate_duration    = "24h"
+    rotate_max_files   = 15
+  }
+}
+%{ endif }
+%{ if configure_autopilot }
+autopilot {
+%{ if autopilot_cleanup_dead_servers }%{ else }  cleanup_dead_servers = false %{ endif }
+%{ if autopilot_last_contact_threshold != "" }  last_contact_threshold = "${autopilot_last_contact_threshold}"%{ endif }
+%{ if autopilot_max_trailing_logs != "" }  max_trailing_logs = "${autopilot_max_trailing_logs}"%{ endif }
+%{ if autopilot_server_stabilization_time != "" }  server_stabilization_time = "${autopilot_server_stabilization_time}"%{ endif }
+%{ if autopilot_redundancy_zone_tag != "" }  redundancy_zone_tag = "${autopilot_redundancy_zone_tag}"%{ endif }
+%{ if autopilot_disable_upgrade_migration }  disable_upgrade_migration = "true"%{ endif }
+%{ if autopilot_upgrade_version_tag != "" }  upgrade_version_tag = "${autopilot_upgrade_version_tag}"%{ endif }
+}
+%{ endif }
+%{ if enable_auto_encrypt }
+auto_encrypt {
+%{ if enable_auto_encrypt_allow_tls }  allow_tls = true%{ endif }
+%{ if enable_auto_encrypt_tls }  tls = true%{ endif }
+}
+%{ endif }
+%{ if server }
+server = true
+bootstrap_expect = $CLUSTER_SIZE
+%{ endif }
+bind_addr = "$INSTANCE_IP"
+%{ if enable_tls }
+ca_file = "${consul_ca_file}"
+cert_file = "${consul_cert_file}"
+key_file = "${consul_key_file}"
+%{ if enable_tls_verify_incoming }verify_incoming = true%{ endif}
+%{ if enable_tls_verify_outgoing }verify_outgoing = true%{ endif}
+%{ if enable_tls_verify_server_hostname }verify_server_hostname = true%{ endif}
+%{ endif }
+client_addr = "0.0.0.0"
+%{ if enable_connect }
+connect {
+  enabled = true
+%{ if enable_mesh_gateway_wan_federation }  enable_mesh_gateway_wan_federation = true%{ endif}
+  ca_provider = "consul"
+  ca_config {
+    private_key = "${consul_ca_key_file}"
+    root_cert = "${consul_ca_file}"
+  }
+}
+%{ endif }
+datacenter = "$INSTANCE_REGION"
+data_dir = "${data_dir}"
+%{ if consul_domain != ""}domain = "${consul_domain}"%{ endif }
+%{ if encrypt_key != "" }encrypt = "${encrypt_key}"%{ endif }
+node_name = "$INSTANCE_NAME"
+%{ if enable_node_metadata }
+node_meta {
+  zone = "$INSTANCE_ZONE"
+}
+%{ endif }
+%{ if enable_performance_config }
+performance {
+  raft_multiplier = ${raft_multiplier}
+}
+%{ endif }
+%{ if enable_ports_config }
+ports {
+  dns = ${dns_port}
+  http = ${http_port}
+  https = ${https_port}
+  grpc = ${grpc_port}
+}
+%{ endif }
+%{ if primary_consul_datacenter != ""}primary_datacenter = "${primary_consul_datacenter}"%{ endif }
+%{ if primary_consul_gateway != ""}primary_gateways = ["${primary_consul_gateway}"]%{ endif }
+%{ if raft_protocol_version != ""}raft_protocol = ${raft_protocol_version}%{ endif }
+retry_join = ["provider=gce project_name=$PROJECT_ID tag_value=$CLUSTER_TAG_NAME"]
+%{ if consul_wan_join }retry_join_wan = ["provider=gce project_name=$PROJECT_ID tag_value=$CONSUL_WAN_JOIN_TAG"]%{ endif }
+%{ if ui }ui = true%{ endif }
