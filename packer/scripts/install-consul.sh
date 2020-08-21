@@ -6,7 +6,10 @@ export DEBIAN_FRONTEND=noninteractive
 
 if [ "${CONSUL_VERSION}" == "" ]; then
   export CONSUL_VERSION=$(curl -sSL https://releases.hashicorp.com/index.json \
-    | jq -r ".consul.versions | keys | .[]" | sort --version-sort | tail -n1)
+    | jq -r ".consul.versions | keys | .[]" \
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 if [[ "${CONSUL_VERSION}" == *"-beta"* ]]; then

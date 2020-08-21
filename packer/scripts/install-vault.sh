@@ -7,7 +7,9 @@ export DEBIAN_FRONTEND=noninteractive
 if [ "${VAULT_VERSION}" == "" ]; then
   export VAULT_VERSION=$(curl -sSL https://releases.hashicorp.com/index.json \
     | jq -r ".vault.versions | keys | .[]" \
-    | grep -v 'oci\|ent' | sort --version-sort | tail -n1)
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 if [ "${VAULT_PREMIUM}" = "true" ]; then

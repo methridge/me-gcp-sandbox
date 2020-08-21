@@ -7,22 +7,27 @@ if [ "${CONSUL_TEMPLATE_VERSION}" == "" ]; then
   export CONSUL_TEMPLATE_VERSION=$(curl -sSL \
     https://releases.hashicorp.com/index.json \
     | jq -r '."consul-template".versions | keys | .[]' \
-    | sort --version-sort | tail -n1)
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 if [ "${ENVCONSUL_VERSION}" == "" ]; then
   export ENVCONSUL_VERSION=$(curl -sSL \
     https://releases.hashicorp.com/index.json \
     | jq -r '.envconsul.versions | keys | .[]' \
-    | sort --version-sort | tail -n1)
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 if [ "${TERRAFORM_VERSION}" == "" ]; then
   export TERRAFORM_VERSION=$(curl -sSL \
     https://releases.hashicorp.com/index.json \
     | jq -r '.terraform.versions | keys | .[]' \
-    | grep -v 'alpha\|beta\|rc\|oci' \
-    | sort --version-sort | tail -n1)
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 # Download additional binaries

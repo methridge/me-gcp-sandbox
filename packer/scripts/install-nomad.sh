@@ -6,7 +6,10 @@ export DEBIAN_FRONTEND=noninteractive
 
 if [ "${NOMAD_VERSION}" == "" ]; then
   export NOMAD_VERSION=$(curl -sSL https://releases.hashicorp.com/index.json \
-    | jq -r ".nomad.versions | keys | .[]" | sort --version-sort | tail -n1)
+    | jq -r ".nomad.versions | keys | .[]" \
+    | grep -v 'alpha\|beta\|ent\|oci\|rc' \
+    | sort --version-sort \
+    | tail -n1)
 fi
 
 if [ "${NOMAD_PREMIUM}" = "true" ]; then
@@ -17,7 +20,7 @@ if [ "${NOMAD_PREMIUM}" = "true" ]; then
 else
   echo "Installing Releases Version"
   curl --silent --output /tmp/nomad.zip \
-  https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}${NOMAD_VERSION_EXTRA}_linux_amd64.zip
+  https://releases.hashicorp.com/nomad/${NOMAD_VERSION}${NOMAD_VERSION_EXTRA}/nomad_${NOMAD_VERSION}${NOMAD_VERSION_EXTRA}_linux_amd64.zip
 fi
 
 unzip -d /tmp /tmp/nomad.zip
