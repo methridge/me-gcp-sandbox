@@ -17,6 +17,16 @@ while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-
 done
 chmod +x /tmp/files/*.sh
 
+%{ if hashistack_image }
+/usr/local/bin/run-consul.sh \
+  --${consul_mode} \
+  --cluster-tag-name "${consul_cluster_tag_name}"
+/usr/local/bin/run-nomad.sh \
+  --${nomad_mode} \
+  --enable-acls "${nomad_acl_enabled}" \
+  --num-servers "${nomad_num_servers}" \
+  --cluster-tag-name "${nomad_cluster_tag_name}"
+%{ else }
 /tmp/files/boot-hashistack.sh \
   --prem-bucket "${prem_bucket}" \
   --consul-mode "${consul_mode}" \
@@ -44,6 +54,7 @@ chmod +x /tmp/files/*.sh
   --envconsul "${envconsul_ver}" \
   --terraform "${terraform_ver}" \
   --elk-stack "${elk_stack}"
+%{ endif }
 
 # Install CNI
 curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz

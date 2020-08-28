@@ -11,6 +11,12 @@ while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-
 done
 chmod +x /tmp/files/*.sh
 
+%{ if hashistack_image }
+/usr/local/bin/run-consul.sh \
+  --${consul_mode} \
+  --cluster-tag-name "${consul_cluster_tag_name}" \
+  --consul-cluster-wan-join-tag "${consul_cluster_wan_tag_name}"
+%{ else }
 /tmp/files/boot-hashistack.sh \
   --prem-bucket "${prem_bucket}" \
   --consul-mode "${consul_mode}" \
@@ -39,3 +45,4 @@ chmod +x /tmp/files/*.sh
   --envconsul "${envconsul_ver}" \
   --terraform "${terraform_ver}" \
   --elk-stack "${elk_stack}"
+%{ endif }

@@ -177,6 +177,10 @@ function run {
     exit 1
   fi
 
+  if [[ ! -f /opt/consul/tls/consul-agent-ca.pem && -f /tmp/files/consul-tls/consul-agent-ca.pem ]]; then
+    sudo mv /tmp/files/consul-tls/*.pem /opt/consul/tls/
+  fi
+
   generate_consul_config \
     "$server" \
     "$cluster_tag_name" \

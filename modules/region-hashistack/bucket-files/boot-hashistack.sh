@@ -85,7 +85,7 @@ function install_binaries {
 
   if [[ ${version} == "" ]]; then
     version=$(jq -r ".\"${product}\".versions | keys | .[]" /tmp/index.json \
-      | grep -v 'oci\|hsm\|ent\|beta\|rc' \
+      | grep -v 'alpha\|beta\|ent\|hsm\|oci\|rc' \
       | sort --version-sort \
       | tail -n1)
   fi
@@ -97,7 +97,7 @@ function install_binaries {
   fi
 
   local -r url="https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip"
-  local -r bin_dir="/usr/local/bin"
+  local -r bin_dir="/usr/bin"
   local -r dest_path="${bin_dir}/${product}"
 
   if [[ ${prem} = "true" ]]; then
@@ -156,9 +156,9 @@ function create_service {
   local -r product="$1"
 
   log_info "Configuring ${product} Service"
-  sudo mv /tmp/files/${product}.service /etc/systemd/system/${product}.service
-  sudo chown root:root /etc/systemd/system/${product}.service
-  sudo chmod 644 /etc/systemd/system/${product}.service
+  sudo mv /tmp/files/${product}.service /usr/lib/systemd/system/${product}.service
+  sudo chown root:root /usr/lib/systemd/system/${product}.service
+  sudo chmod 644 /usr/lib/systemd/system/${product}.service
 }
 
 function configure_mlock {

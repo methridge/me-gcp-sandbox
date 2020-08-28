@@ -55,6 +55,7 @@ resource "google_compute_instance" "region_bastion" {
 data "template_file" "region_bastion_startup_script" {
   template = file("${path.module}/templates/bastion.sh.tmpl")
   vars = {
+    hashistack_image                  = var.hashistack_image
     prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
@@ -118,6 +119,7 @@ module "region_consul_cluster" {
 data "template_file" "region-consul-server-startup-script" {
   template = file("${path.module}/templates/consul-server.sh.tmpl")
   vars = {
+    hashistack_image                  = var.hashistack_image
     prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = "server"
@@ -203,6 +205,7 @@ module "region_nomad_servers" {
 data "template_file" "region_startup_script_nomad_server" {
   template = file("${path.module}/templates/nomad-server.sh.tmpl")
   vars = {
+    hashistack_image                  = var.hashistack_image
     prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
@@ -260,6 +263,7 @@ module "region_nomad_clients" {
 data "template_file" "region_startup_script_nomad_client" {
   template = file("${path.module}/templates/nomad-client.sh.tmpl")
   vars = {
+    hashistack_image                  = var.hashistack_image
     prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
@@ -353,6 +357,7 @@ module "region_vault_cluster" {
 data "template_file" "region_startup_script_vault" {
   template = file("${path.module}/templates/vault-server.sh.tmpl")
   vars = {
+    hashistack_image                  = var.hashistack_image
     prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode

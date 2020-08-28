@@ -11,6 +11,26 @@ while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-
 done
 chmod +x /tmp/files/*.sh
 
+%{ if hashistack_image }
+/usr/local/bin/run-consul.sh \
+  --${consul_mode} \
+  --cluster-tag-name "${consul_cluster_tag_name}"
+if [[ ${vault_auto_unseal_key_project_id} == "" ||
+      ${vault_auto_unseal_key_region} == "" ||
+      ${vault_auto_unseal_key_ring} == "" ||
+      ${vault_auto_unseal_crypto_key_name} == "" ]];then
+  log_error "Auto Unseal parameters missing"
+  exit 1
+fi
+/usr/local/bin/run-vault.sh \
+  --vault-storage "${vault_storage}" \
+  --tls-cert-file "/opt/vault/tls/vault.crt.pem" \
+  --tls-key-file "/opt/vault/tls/vault.key.pem" \
+  --auto-unseal-key-project-id "${vault_auto_unseal_key_project_id}" \
+  --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
+  --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
+  --auto-unseal-crypto-key-name "${vault_auto_unseal_crypto_key_name}"
+%{ else }
 /tmp/files/boot-hashistack.sh \
   --prem-bucket "${prem_bucket}" \
   --consul-mode "${consul_mode}" \
@@ -38,3 +58,4 @@ chmod +x /tmp/files/*.sh
   --envconsul "${envconsul_ver}" \
   --terraform "${terraform_ver}" \
   --elk-stack "${elk_stack}"
+%{ endif }

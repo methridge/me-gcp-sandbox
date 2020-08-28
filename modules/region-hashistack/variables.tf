@@ -36,6 +36,12 @@ variable "dnszone" {
 # Optional with defaults
 #
 
+variable "hashistack_image" {
+  type        = bool
+  description = "Is this a packer hashistack image or base ubuntu"
+  default     = false
+}
+
 variable "machine_type" {
   type        = string
   description = "Instance machine type"

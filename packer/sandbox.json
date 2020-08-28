@@ -2,27 +2,26 @@
   "min_packer_version": "1.5.6",
   "variables": {
     "username": "methridge",
-    "gcp_account_file": "/Users/methridge/.config/gcloud/creds/methridge-terrafrom-methridge-sandbox-a30ad7275525.json",
     "project_id": "methridge-sandbox",
     "zone": "us-central1-f",
+    "premium_bucket": "sandbox-bin",
+    "consul_ent": "true",
     "consul_premium": "false",
     "consul_version": "",
-    "consul_version_extra": "+ent",
     "consul_template_version": "",
     "envconsul_version": "",
+    "nomad_ent": "true",
     "nomad_premium": "false",
     "nomad_version": "",
-    "nomad_version_extra": "+ent",
     "terraform_version": "",
+    "vault_ent": "true",
     "vault_premium": "false",
-    "vault_version": "",
-    "vault_version_extra": "+ent"
+    "vault_version": ""
   },
   "builders": [
     {
       "name": "sandbox-image",
       "type": "googlecompute",
-      "account_file": "{{user `gcp_account_file`}}",
       "image_name": "{{user `username`}}-sandbox",
       "image_family": "{{user `username`}}-sandbox",
       "project_id": "{{user `project_id`}}",
@@ -33,53 +32,28 @@
   ],
   "provisioners": [
     {
+      "type": "shell",
+      "inline": ["mkdir /tmp/files"]
+    },
+    {
       "type": "file",
-      "source": "files",
-      "destination": "/tmp"
+      "source": "../modules/region-hashistack/bucket-files/",
+      "destination": "/tmp/files"
     },
     {
       "type": "shell",
-      "script": "scripts/install-base.sh",
-      "pause_before": "5s",
-      "max_retries": 5
-    },
-    {
-      "type": "shell",
-      "script": "scripts/install-consul.sh",
+      "script": "scripts/install-hashistack.sh",
       "environment_vars": [
+        "PREMIUM_BUCKET={{user `premium_bucket`}}",
+        "CONSUL_ENT={{user `consul_ent`}}",
         "CONSUL_PREMIUM={{user `consul_premium`}}",
         "CONSUL_VERSION={{user `consul_version`}}",
-        "CONSUL_VERSION_EXTRA={{user `consul_version_extra`}}"
-      ],
-      "pause_before": "5s",
-      "max_retries": 5
-    },
-    {
-      "type": "shell",
-      "script": "scripts/install-nomad.sh",
-      "environment_vars": [
+        "NOMAD_ENT={{user `nomad_ent`}}",
         "NOMAD_PREMIUM={{user `nomad_premium`}}",
         "NOMAD_VERSION={{user `nomad_version`}}",
-        "NOMAD_VERSION_EXTRA={{user `nomad_version_extra`}}"
-      ],
-      "pause_before": "5s",
-      "max_retries": 5
-    },
-    {
-      "type": "shell",
-      "script": "scripts/install-vault.sh",
-      "environment_vars": [
+        "VAULT_ENT={{user `vault_ent`}}",
         "VAULT_PREMIUM={{user `vault_premium`}}",
         "VAULT_VERSION={{user `vault_version`}}",
-        "VAULT_VERSION_EXTRA={{user `vault_version_extra`}}"
-      ],
-      "pause_before": "5s",
-      "max_retries": 5
-    },
-    {
-      "type": "shell",
-      "script": "scripts/install-extra.sh",
-      "environment_vars": [
         "CONSUL_TEMPLATE_VERSION={{user `consul_template_version`}}",
         "ENVCONSUL_VERSION={{user `envconsul_version`}}",
         "TERRAFORM_VERSION={{user `terraform_version`}}"

@@ -197,6 +197,14 @@ function run {
     shift
   done
 
+  if [[ ! -f /opt/vault/tls/ca.crt.pem && -f /tmp/files/vault-ca.pem ]]; then
+    sudo mv /tmp/files/vault-ca.pem /opt/vault/tls/ca.crt.pem
+    sudo mv /tmp/files/vault.pem /opt/vault/tls/vault.crt.pem
+    sudo mv /tmp/files/vault-key.pem /opt/vault/tls/vault.key.pem
+    sudo cp /opt/vault/tls/ca.crt.pem /usr/local/share/ca-certificates/custom.crt
+    sudo update-ca-certificates
+  fi
+
   generate_vault_config "$vault_storage" "$tls_cert_file" \
     "$tls_key_file" "$auto_unseal_project" \
     "$auto_unseal_region" "$auto_unseal_key_ring" \
