@@ -66,6 +66,7 @@ function generate_vault_config {
 
   instance_ip_address=$(get_instance_ip_address)
   instance_region=$(get_instance_region)
+  master_token=$(</tmp/files/consul-tls/consul-master-token.txt)
 
   if [[ $vault_storage == "" ||
         $vault_storage == "raft" ]]; then
@@ -80,7 +81,7 @@ listener "tcp" {
 }
 
 cluster_addr  = "https://$instance_ip_address:8201"
-api_addr      = "https://active.vault.service.$instance_region.consul:8200"
+api_addr      = "https://active.vault.service.${instance_region}.consul:8200"
 
 seal "gcpckms" {
   project     = "$auto_unseal_project"
@@ -95,7 +96,12 @@ storage "raft" {
 }
 
 service_registration "consul" {
-  address      = "127.0.0.1:8500"
+  address = "127.0.0.1:8501"
+  scheme = "https"
+  token = "$master_token"
+  tls_ca_file = "/opt/consul/tls/consul-agent-ca.pem"
+  tls_cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
+  tls_key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"
 }
 
 telemetry {
@@ -127,8 +133,14 @@ seal "gcpckms" {
 }
 
 storage "consul" {
-  address = "127.0.0.1:8500"
+  address = "127.0.0.1:8501"
+  scheme = "https"
   path    = "vault"
+  token   = "$master_token"
+  tls_ca_file = "/opt/consul/tls/consul-agent-ca.pem"
+  tls_cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
+  tls_key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"
+
 }
 
 ui = true

@@ -55,6 +55,7 @@ function generate_consul_config {
   local -r cluster_tag_name="$2"
   local -r cluster_size_instance_metadata_key_name="$3"
   local -r cluster_wan_join_tag="$4"
+  local -r consul_primary_dc="$5"
 
   instance_ip_address=$(get_instance_ip_address)
   instance_name=$(get_instance_name)
@@ -83,11 +84,6 @@ verify_incoming = true
 verify_outgoing = true
 verify_server_hostname = true
 ca_file = "/opt/consul/tls/consul-agent-ca.pem"
-acl {
-  enabled = true
-  default_policy = "allow"
-  enable_token_persistence = true
-}
 audit {
   enabled = true
   sink "Audit Sync" {
@@ -105,14 +101,67 @@ telemetry {
   disable_hostname = true
 }
 ports {
+  https = 8501
   grpc = 8502
 }
 EOF
+
+  if [[ "${consul_primary_dc}" != "" ]]; then
+    echo "Primary DC defined as : ${consul_primary_dc}"
+    cat > "/etc/consul.d/acl.hcl" <<EOF
+primary_datacenter = "${consul_primary_dc}"
+EOF
+    if [[ "${instance_region}" != "${consul_primary_dc}" ]]; then
+      echo "Consul DC is not Primary DC"
+      cat >> "/etc/consul.d/acl.hcl" <<EOF
+acl {
+  enabled = true
+  default_policy = "deny"
+  enable_token_persistence = true
+  enable_token_replication = true
+  tokens {
+    master = "${master_token}"
+    agent  = "${master_token}"
+    replication = "${master_token}"
+  }
+}
+EOF
+    else
+      echo "Consul DC is Primary DC"
+      cat >> "/etc/consul.d/acl.hcl" <<EOF
+acl {
+  enabled = true
+  default_policy = "allow"
+  enable_token_persistence = true
+  tokens {
+    master = "${master_token}"
+    agent  = "${master_token}"
+    replication = "${master_token}"
+  }
+}
+EOF
+    fi
+  else
+    echo "No Primary DC defined"
+    cat >> "/etc/consul.d/acl.hcl" <<EOF
+acl {
+  enabled = true
+  default_policy = "deny"
+  enable_token_persistence = true
+  tokens {
+    master = "${master_token}"
+    agent  = "${master_token}"
+    replication = "${master_token}"
+  }
+}
+EOF
+  fi
 
   if [[ "$server" == "true" ]]; then
     cat > "/etc/consul.d/server.hcl" <<EOF
 server = true
 bootstrap_expect = $cluster_size
+server_name = "server.${instance_region}.consul"
 ui = true
 
 connect {
@@ -149,6 +198,7 @@ function run {
   local client="false"
   local cluster_tag_name=""
   local cluster_wan_join_tag=""
+  local consul_primary_dc=""
 
   while [[ $# > 0 ]]; do
     local key="$1"
@@ -168,6 +218,10 @@ function run {
         cluster_wan_join_tag="$2"
         shift
         ;;
+      --consul-primary-dc)
+        consul_primary_dc="$2"
+        shift
+        ;;
     esac
 
     shift
@@ -185,7 +239,8 @@ function run {
     "$server" \
     "$cluster_tag_name" \
     "$CLUSTER_SIZE_INSTANCE_METADATA_KEY_NAME" \
-    "$cluster_wan_join_tag"
+    "$cluster_wan_join_tag" \
+    "$consul_primary_dc"
     
   start_consul
 }

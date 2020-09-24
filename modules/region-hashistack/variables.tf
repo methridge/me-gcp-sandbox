@@ -32,6 +32,26 @@ variable "dnszone" {
   description = "DNS Zone name for LB"
 }
 
+variable "consul_token" {
+  type        = string
+  description = "Consul Master Token"
+}
+
+variable "consul_gossip_key" {
+  type        = string
+  description = "Consul Gossip Encryption Key"
+}
+
+variable "sandbox_ca_pem" {
+  type        = string
+  description = "Sandbox TLS CA"
+}
+
+variable "sandbox_ca_key" {
+  type        = string
+  description = "Sandbox TLS CA Key"
+}
+
 #
 # Optional with defaults
 #
@@ -88,6 +108,12 @@ variable "consul_prem" {
   type        = bool
   description = "Install Consul Premium binary - true/false - Defaults to false"
   default     = false
+}
+
+variable "consul_primary_dc" {
+  type        = string
+  description = "Primary Consul Datacenter"
+  default     = ""
 }
 
 variable "consul_template_ver" {

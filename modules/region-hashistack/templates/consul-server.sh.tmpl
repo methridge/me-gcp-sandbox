@@ -15,7 +15,8 @@ chmod +x /tmp/files/*.sh
 /usr/local/bin/run-consul.sh \
   --${consul_mode} \
   --cluster-tag-name "${consul_cluster_tag_name}" \
-  --consul-cluster-wan-join-tag "${consul_cluster_wan_tag_name}"
+  --cluster-wan-join-tag "${consul_cluster_wan_tag_name}" \
+  --consul-primary-dc "${consul_primary_dc}"
 %{ else }
 /tmp/files/boot-hashistack.sh \
   --prem-bucket "${prem_bucket}" \
@@ -25,6 +26,7 @@ chmod +x /tmp/files/*.sh
   --consul-prem "${consul_prem}" \
   --consul-cluster-tag-name "${consul_cluster_tag_name}" \
   --consul-cluster-wan-join-tag "${consul_cluster_wan_tag_name}" \
+  --consul-primary-dc "${consul_primary_dc}" \
   --vault-mode "${vault_mode}" \
   --vault-storage "${vault_storage}" \
   --vault-version "${vault_version}" \

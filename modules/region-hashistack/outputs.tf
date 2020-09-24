@@ -6,12 +6,20 @@ output "region-lb-ip" {
   value = google_compute_address.region-pub-ip.address
 }
 
-output "vault_ca_key_pem" {
-  value = module.region_vault_tls.vault_ca_key_pem
+output "consul_server_key_pem" {
+  value = module.region_consul_tls.consul_server_key_pem
 }
 
-output "vault_ca_pem" {
-  value = module.region_vault_tls.vault_ca_pem
+output "consul_server_pem" {
+  value = module.region_consul_tls.consul_server_pem
+}
+
+output "consul_client_key_pem" {
+  value = module.region_consul_tls.consul_client_key_pem
+}
+
+output "consul_client_pem" {
+  value = module.region_consul_tls.consul_client_pem
 }
 
 output "vault_server_key_pem" {

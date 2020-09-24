@@ -93,9 +93,26 @@ data "template_file" "region_bastion_startup_script" {
 
 # Consul TLS
 module "region_consul_tls" {
-  source        = "../consul-tls"
-  dc            = var.region
-  config_bucket = google_storage_bucket.config_bucket.name
+  source         = "../consul-tls"
+  dc             = var.region
+  config_bucket  = google_storage_bucket.config_bucket.name
+  dnszone        = var.dnszone
+  sandbox_ca_pem = var.sandbox_ca_pem
+  sandbox_ca_key = var.sandbox_ca_key
+}
+
+resource "google_storage_bucket_object" "consul-master-token" {
+  depends_on = [module.region_consul_tls]
+  name       = "consul-tls/consul-master-token.txt"
+  bucket     = google_storage_bucket.config_bucket.name
+  content    = var.consul_token
+}
+
+resource "google_storage_bucket_object" "consul-gossip" {
+  depends_on = [module.region_consul_tls]
+  name       = "consul-tls/consul-gossip.txt"
+  bucket     = google_storage_bucket.config_bucket.name
+  content    = var.consul_gossip_key
 }
 
 module "region_consul_cluster" {
@@ -128,6 +145,7 @@ data "template_file" "region-consul-server-startup-script" {
     consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     consul_cluster_wan_tag_name       = var.consul_wan_tag
+    consul_primary_dc                 = var.consul_primary_dc
     vault_mode                        = var.vault_mode
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
@@ -328,10 +346,12 @@ resource "google_kms_crypto_key_iam_binding" "region_crypto_key_iam" {
 
 # Vault TLS
 module "region_vault_tls" {
-  source        = "../vault-tls"
-  region        = var.region
-  config_bucket = google_storage_bucket.config_bucket.name
-  dnszone       = var.dnszone
+  source         = "../vault-tls"
+  region         = var.region
+  config_bucket  = google_storage_bucket.config_bucket.name
+  dnszone        = var.dnszone
+  sandbox_ca_pem = var.sandbox_ca_pem
+  sandbox_ca_key = var.sandbox_ca_key
 }
 
 module "region_vault_cluster" {

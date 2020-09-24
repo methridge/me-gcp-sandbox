@@ -36,7 +36,7 @@ function install_dependancies {
   sudo apt-get --quiet --assume-yes upgrade
   sudo apt-get --quiet --assume-yes dist-upgrade
   sudo apt-get --quiet --assume-yes autoremove
-  sudo apt-get --quiet --assume-yes install curl unzip jq
+  sudo apt-get --quiet --assume-yes install curl unzip jq net-tools
   log_info "Dependancies Installed"
 
   log_info "Downloading Versions JSON"
@@ -189,6 +189,30 @@ function run_filebeat {
   fi
 }
 
+function install_envoy {
+  log_info "Installing Envoy Proxy"
+  sudo apt-get --quiet --assume-yes install dnsmasq resolvconf
+
+  sudo apt-get --quiet --assume-yes update
+
+  sudo apt-get --quiet --assume-yes install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+  curl -sL 'https://getenvoy.io/gpg' | sudo apt-key add -
+
+  sudo add-apt-repository \
+    "deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb \
+    $(lsb_release -cs) \
+    stable"
+
+  sudo apt-get --quiet --assume-yes update
+  sudo apt-get --quiet --assume-yes install getenvoy-envoy=1.14.4.p0.g923c411-1p67.g2aa564b
+}
+
 function install {
   log_info "Starting Hashistack install"
 
@@ -229,6 +253,10 @@ function install {
   install_binaries "" "envconsul" "${ENVCONSUL_VERSION}" "" ""
   install_binaries "" "terraform" "${TERRAFORM_VERSION}" "" ""
   log_info "Completed install of additional HashiCorp products"
+
+  log_info "Installing Envoy Proxy"
+  install_envoy
+  log_info "Completed install of Envoy Proxy"
 
   if [[ $elk_stack == "true" ]]; then
     log_info "Installing Telegraf"

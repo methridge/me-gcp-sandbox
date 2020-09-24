@@ -1,46 +1,13 @@
-# Create Vault TLS CA Key
-resource "tls_private_key" "vault-ca-key" {
-  algorithm   = "ECDSA"
-  ecdsa_curve = "P256"
-}
-
 resource "google_storage_bucket_object" "vault-ca-key-file" {
   name    = "vault-ca-key.pem"
   bucket  = var.config_bucket
-  content = tls_private_key.vault-ca-key.private_key_pem
-}
-
-# Create Vault TLS CA Certificate
-resource "tls_self_signed_cert" "vault-ca" {
-  key_algorithm         = "ECDSA"
-  private_key_pem       = tls_private_key.vault-ca-key.private_key_pem
-  validity_period_hours = "43800"
-  is_ca_certificate     = true
-  set_subject_key_id    = true
-
-  subject {
-    common_name         = "Vault CA - ${var.region}"
-    organization        = "HashiCorp Inc."
-    organizational_unit = ""
-    street_address      = ["101 Second Street"]
-    locality            = "San Francisco"
-    province            = "CA"
-    country             = "US"
-    postal_code         = "94105"
-  }
-
-
-  allowed_uses = [
-    "digital_signature",
-    "cert_signing",
-    "crl_signing"
-  ]
+  content = var.sandbox_ca_key
 }
 
 resource "google_storage_bucket_object" "vault-ca-file" {
   name    = "vault-ca.pem"
   bucket  = var.config_bucket
-  content = tls_self_signed_cert.vault-ca.cert_pem
+  content = var.sandbox_ca_pem
 }
 
 # Create Vault Server TLS Key
@@ -79,8 +46,8 @@ resource "tls_cert_request" "vault-server-csr" {
 resource "tls_locally_signed_cert" "vault-server-cert" {
   cert_request_pem      = tls_cert_request.vault-server-csr.cert_request_pem
   ca_key_algorithm      = "ECDSA"
-  ca_private_key_pem    = tls_private_key.vault-ca-key.private_key_pem
-  ca_cert_pem           = tls_self_signed_cert.vault-ca.cert_pem
+  ca_private_key_pem    = var.sandbox_ca_key
+  ca_cert_pem           = var.sandbox_ca_pem
   validity_period_hours = 8760
   set_subject_key_id    = true
 
