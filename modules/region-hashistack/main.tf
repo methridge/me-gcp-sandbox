@@ -272,10 +272,9 @@ module "region_nomad_clients" {
   allowed_inbound_tags_rpc  = var.custom_tags
   allowed_inbound_tags_serf = var.custom_tags
   instance_group_target_pools = [
-    module.region-fabio-lb.target_pool,
-    module.region-fabio-admin-lb.target_pool,
     module.region-traefik-lb.target_pool,
-  module.region-traefik-admin-lb.target_pool]
+    module.region-traefik-admin-lb.target_pool
+  ]
 }
 
 data "template_file" "region_startup_script_nomad_client" {
@@ -481,48 +480,6 @@ module "region-nomad-lb" {
   allowed_ips  = var.allowed_ips
 }
 
-module "region-fabio-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-fabio-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 9998
-    request_path        = "/health"
-    host                = "localhost"
-  }
-  service_port = 9999
-  target_tags  = ["${var.region}-fabio-clients"]
-  allowed_ips  = var.allowed_ips
-}
-
-module "region-fabio-admin-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-fabio-admin-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 9998
-    request_path        = "/health"
-    host                = "localhost"
-  }
-  service_port = 9998
-  target_tags  = ["${var.region}-fabio-clients"]
-  allowed_ips  = var.allowed_ips
-}
-
 module "region-traefik-lb" {
   source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
   project    = var.project
@@ -565,44 +522,3 @@ module "region-traefik-admin-lb" {
   allowed_ips  = var.allowed_ips
 }
 
-module "region-traefik-grafana-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-traefik-grafana-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 8082
-    request_path        = "/ping"
-    host                = "localhost"
-  }
-  service_port = 3000
-  target_tags  = ["${var.region}-traefik-clients"]
-  allowed_ips  = var.allowed_ips
-}
-
-module "region-traefik-kibana-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-traefik-kibana-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 8082
-    request_path        = "/ping"
-    host                = "localhost"
-  }
-  service_port = 5601
-  target_tags  = ["${var.region}-traefik-clients"]
-  allowed_ips  = var.allowed_ips
-}
