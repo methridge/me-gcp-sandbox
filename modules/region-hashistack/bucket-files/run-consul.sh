@@ -64,7 +64,7 @@ function generate_consul_config {
   project_id=$(get_instance_project_id)
   cluster_size=$(get_instance_custom_metadata_value "$cluster_size_instance_metadata_key_name")
   gossip_key=$(</tmp/files/consul-tls/consul-gossip.txt)
-  master_token=$(</tmp/files/consul-tls/consul-master-token.txt)
+  main_token=$(</tmp/files/consul-tls/consul-main-token.txt)
   client_token=$(</tmp/files/consul-tls/consul-client-token.txt)
   server_token=$(</tmp/files/consul-tls/consul-server-token.txt)
 
@@ -120,9 +120,9 @@ acl {
   enable_token_persistence = true
   enable_token_replication = true
   tokens {
-    master = "${master_token}"
-    agent  = "${master_token}"
-    replication = "${master_token}"
+    main = "${main_token}"
+    agent  = "${main_token}"
+    replication = "${main_token}"
   }
 }
 EOF
@@ -134,9 +134,9 @@ acl {
   default_policy = "allow"
   enable_token_persistence = true
   tokens {
-    master = "${master_token}"
-    agent  = "${master_token}"
-    replication = "${master_token}"
+    main = "${main_token}"
+    agent  = "${main_token}"
+    replication = "${main_token}"
   }
 }
 EOF
@@ -149,9 +149,9 @@ acl {
   default_policy = "deny"
   enable_token_persistence = true
   tokens {
-    master = "${master_token}"
-    agent  = "${master_token}"
-    replication = "${master_token}"
+    main = "${main_token}"
+    agent  = "${main_token}"
+    replication = "${main_token}"
   }
 }
 EOF

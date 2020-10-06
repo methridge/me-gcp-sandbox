@@ -18,7 +18,7 @@ variable enable_acl_tokens {
   default     = false
 }
 
-variable master_token {
+variable main_token {
   description = ""
   default     = ""
 }

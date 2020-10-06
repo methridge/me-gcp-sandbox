@@ -60,7 +60,7 @@ function generate_nomad_config {
   instance_region=$(get_instance_region)
   instance_zone=$(get_instance_zone)
   project_id=$(get_instance_project_id)
-  master_token=$(</tmp/files/consul-tls/consul-master-token.txt)
+  main_token=$(</tmp/files/consul-tls/consul-main-token.txt)
 
   if [[ "$server" == "true" ]]; then
     cat > "/etc/nomad.d/server.hcl" <<EOF
@@ -107,7 +107,7 @@ server_join {
 consul {
   address = "127.0.0.1:8501"
   ssl = true
-  token   = "$master_token"
+  token   = "$main_token"
   ca_file = "/opt/consul/tls/consul-agent-ca.pem"
   cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
   key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"

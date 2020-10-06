@@ -5,7 +5,7 @@ acl {
 %{ if enable_acl_token_persistence }  enable_token_persistence = true%{ endif}
 %{ if enable_acl_tokens }
   tokens {
-%{ if master_token != "" }    master = "${master_token}"%{ endif }
+%{ if main_token != "" }    main = "${main_token}"%{ endif }
 %{ if agent_token != "" }    agent = "${agent_token}"%{ endif }
 %{ if replication_token != "" }    replication = "${replication_token}"%{ endif }
   }

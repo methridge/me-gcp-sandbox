@@ -101,9 +101,9 @@ module "region_consul_tls" {
   sandbox_ca_key = var.sandbox_ca_key
 }
 
-resource "google_storage_bucket_object" "consul-master-token" {
+resource "google_storage_bucket_object" "consul-main-token" {
   depends_on = [module.region_consul_tls]
-  name       = "consul-tls/consul-master-token.txt"
+  name       = "consul-tls/consul-main-token.txt"
   bucket     = google_storage_bucket.config_bucket.name
   content    = var.consul_token
 }

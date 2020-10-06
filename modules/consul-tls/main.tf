@@ -113,12 +113,12 @@ resource "google_storage_bucket_object" "consul-client-file" {
 }
 
 # Consul Security
-# resource "random_uuid" "consul_master_token" {}
+# resource "random_uuid" "consul_main_token" {}
 
-# resource "google_storage_bucket_object" "consul-master-token" {
-#   name    = "consul-tls/consul-master-token.txt"
+# resource "google_storage_bucket_object" "consul-main-token" {
+#   name    = "consul-tls/consul-main-token.txt"
 #   bucket  = var.config_bucket
-#   content = random_uuid.consul_master_token.result
+#   content = random_uuid.consul_main_token.result
 # }
 
 resource "random_uuid" "consul_agent_client_token" {}

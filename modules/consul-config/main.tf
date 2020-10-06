@@ -5,7 +5,7 @@ data "template_file" "consul_config_template" {
     default_acl_policy                  = var.default_acl_policy
     enable_acl_token_persistence        = var.enable_acl_token_persistence
     enable_acl_tokens                   = var.enable_acl_tokens
-    master_token                        = var.master_token
+    main_token                        = var.main_token
     agent_token                         = var.agent_token
     replication_token                   = var.replication_token
     enable_audit                        = var.enable_audit

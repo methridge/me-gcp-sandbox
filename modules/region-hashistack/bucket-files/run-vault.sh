@@ -66,7 +66,7 @@ function generate_vault_config {
 
   instance_ip_address=$(get_instance_ip_address)
   instance_region=$(get_instance_region)
-  master_token=$(</tmp/files/consul-tls/consul-master-token.txt)
+  main_token=$(</tmp/files/consul-tls/consul-main-token.txt)
 
   if [[ $vault_storage == "" ||
         $vault_storage == "raft" ]]; then
@@ -98,7 +98,7 @@ storage "raft" {
 service_registration "consul" {
   address = "127.0.0.1:8501"
   scheme = "https"
-  token = "$master_token"
+  token = "$main_token"
   tls_ca_file = "/opt/consul/tls/consul-agent-ca.pem"
   tls_cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
   tls_key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"
@@ -136,7 +136,7 @@ storage "consul" {
   address = "127.0.0.1:8501"
   scheme = "https"
   path    = "vault"
-  token   = "$master_token"
+  token   = "$main_token"
   tls_ca_file = "/opt/consul/tls/consul-agent-ca.pem"
   tls_cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
   tls_key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"

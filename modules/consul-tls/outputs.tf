@@ -14,8 +14,8 @@ output "consul_client_pem" {
   value = tls_locally_signed_cert.consul-client-cert.cert_pem
 }
 
-# output "consul_master_token" {
-#   value = random_uuid.consul_master_token.result
+# output "consul_main_token" {
+#   value = random_uuid.consul_main_token.result
 # }
 
 output "consul_agent_client_token" {
