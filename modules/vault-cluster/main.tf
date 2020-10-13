@@ -127,7 +127,7 @@ resource "google_compute_instance_template" "vault_public" {
   metadata_startup_script = var.startup_script
   metadata = merge(
     {
-      "${var.metadata_key_name_for_cluster_size}" = var.cluster_size
+      (var.metadata_key_name_for_cluster_size) = (var.cluster_size)
     },
     var.custom_metadata,
   )
@@ -196,7 +196,7 @@ resource "google_compute_instance_template" "vault_private" {
   metadata_startup_script = var.startup_script
   metadata = merge(
     {
-      "${var.metadata_key_name_for_cluster_size}" = var.cluster_size
+      (var.metadata_key_name_for_cluster_size) = (var.cluster_size)
     },
     var.custom_metadata,
   )
