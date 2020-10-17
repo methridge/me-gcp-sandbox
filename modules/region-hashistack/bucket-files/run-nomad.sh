@@ -88,11 +88,13 @@ EOF
 fi
 
   cat > "/etc/nomad.d/nomad.hcl" <<EOF
-datacenter = "$instance_zone"
-data_dir   = "/opt/nomad"
-name       = "$instance_name"
-region     = "$instance_region"
-bind_addr  = "0.0.0.0"
+datacenter         = "$instance_zone"
+data_dir           = "/opt/nomad"
+name               = "$instance_name"
+region             = "$instance_region"
+bind_addr          = "0.0.0.0"
+leave_on_interrupt = true
+leave_on_terminate = true
 
 advertise {
   http = "$instance_ip_address"
