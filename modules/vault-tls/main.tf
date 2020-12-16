@@ -1,3 +1,7 @@
+locals {
+  dnszone = trimsuffix(var.dnszone, ".")
+}
+
 resource "google_storage_bucket_object" "vault-ca-key-file" {
   name    = "vault-ca-key.pem"
   bucket  = var.config_bucket
@@ -32,14 +36,14 @@ resource "tls_cert_request" "vault-server-csr" {
     "*.vault.service.consul",
     "vault.service.${var.region}.consul",
     "*.vault.service.${var.region}.consul",
-    "*.${var.dnszone}",
-    "*.${var.region}.${var.dnszone}",
-    "lb.${var.region}.${var.dnszone}",
+    "*.${local.dnszone}",
+    "*.${var.region}.${local.dnszone}",
+    "lb.${var.region}.${local.dnszone}",
   ]
   ip_addresses = ["127.0.0.1"]
 
   subject {
-    common_name = "lb.${var.region}.${var.dnszone}"
+    common_name = "lb.${var.region}.${local.dnszone}"
   }
 }
 
