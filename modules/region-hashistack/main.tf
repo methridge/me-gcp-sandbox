@@ -11,11 +11,11 @@ data "google_compute_zones" "zones" {
 ### Region Config Storage Bucket
 ###
 resource "google_storage_bucket" "config_bucket" {
-  name               = "${var.region}-config-bucket"
-  location           = upper(var.region)
-  force_destroy      = true
-  project            = var.project
-  bucket_policy_only = true
+  name                        = "${var.region}-config-bucket"
+  location                    = upper(var.region)
+  force_destroy               = true
+  project                     = var.project
+  uniform_bucket_level_access = true
 }
 
 resource "google_storage_bucket_object" "config_files" {
@@ -123,6 +123,7 @@ module "region_consul_cluster" {
   cluster_tag_name              = "${var.region}-consul-servers"
   machine_type                  = var.machine_type
   cluster_size                  = var.consul_cluster_size
+  enable_non_voting             = var.consul_enable_non_voting
   source_image                  = var.image
   startup_script                = data.template_file.region-consul-server-startup-script.rendered
   network_name                  = var.network

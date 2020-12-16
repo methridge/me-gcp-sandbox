@@ -75,6 +75,7 @@ client_addr = "0.0.0.0"
 datacenter = "$instance_region"
 data_dir = "/opt/consul/data"
 encrypt = "${gossip_key}"
+leave_on_terminate = true
 node_name = "$instance_name"
 node_meta {
   zone = "$instance_zone"
@@ -164,6 +165,9 @@ bootstrap_expect = $cluster_size
 server_name = "server.${instance_region}.consul"
 ui = true
 
+autopilot {
+  redundancy_zone_tag = "zone"
+}
 connect {
   enabled = true
 }

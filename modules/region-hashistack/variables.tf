@@ -92,6 +92,12 @@ variable "consul_cluster_size" {
   default     = 3
 }
 
+variable "consul_enable_non_voting" {
+  type        = bool
+  description = "Enable Non-voting servers in cluster"
+  default     = false
+}
+
 variable "consul_ent" {
   type        = bool
   description = "Install Consul Enterprise binary - true/false - Defaults to false"

@@ -53,6 +53,12 @@ variable "startup_script" {
 # These parameters have reasonable defaults.
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "enable_non_voting" {
+  type        = bool
+  description = "Enable Non-voting servers in cluster"
+  default     = false
+}
+
 variable "image_project_id" {
   description = "The name of the GCP Project where the image is located. Useful when using a separate project for custom images. If empty, var.gcp_project_id will be used."
   type        = string

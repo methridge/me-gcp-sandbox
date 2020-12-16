@@ -2,6 +2,7 @@
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
+echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 
 # Log the given message at the given level. All logs are written to stderr with a timestamp.
 function log {
@@ -36,7 +37,13 @@ function install_dependancies {
   sudo apt-get --quiet --assume-yes upgrade
   sudo apt-get --quiet --assume-yes dist-upgrade
   sudo apt-get --quiet --assume-yes autoremove
-  sudo apt-get --quiet --assume-yes install curl unzip jq net-tools
+  sudo apt-get --quiet --assume-yes install curl unzip jq net-tools docker.io default-jre
+
+  # Install CNI
+  curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
+  sudo mkdir -p /opt/cni/bin
+  sudo tar -C /opt/cni/bin -xzf /tmp/cni-plugins.tgz
+
   log_info "Dependancies Installed"
 
   log_info "Downloading Versions JSON"
@@ -268,6 +275,7 @@ function install {
     log_info "Completed Filebeat install"
   fi
 
+  echo 'debconf debconf/frontend select Dialog' | sudo debconf-set-selections
   log_info "Hashistack install complete!"
 }
 

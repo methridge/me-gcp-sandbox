@@ -31,7 +31,7 @@ resource "google_compute_region_instance_group_manager" "consul_server" {
   region             = var.gcp_region
   name               = "${var.cluster_name}-ig"
   target_pools       = var.instance_group_target_pools
-  target_size        = var.cluster_size
+  target_size        = var.enable_non_voting ? (var.cluster_size * 2) : var.cluster_size
   base_instance_name = var.cluster_name
 
   version {
@@ -52,7 +52,7 @@ resource "google_compute_region_instance_group_manager" "consul_server" {
     type                         = "PROACTIVE"
     instance_redistribution_type = "PROACTIVE"
     minimal_action               = "REPLACE"
-    max_surge_fixed              = var.cluster_size
+    max_surge_fixed              = var.enable_non_voting ? (var.cluster_size * 2) : var.cluster_size
     max_unavailable_fixed        = 0
     min_ready_sec                = var.health_check_delay
   }
