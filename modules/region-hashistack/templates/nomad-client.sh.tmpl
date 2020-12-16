@@ -5,10 +5,6 @@ exec > >(tee /var/log/startup-script.log|logger -t startup-script -s 2>/dev/cons
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt update
-apt upgrade -y
-apt install -y docker.io default-jre
-
 mkdir /tmp/files
 while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-tls/consul-agent-ca.pem ]]; do
   echo 'Waiting for Consul TLS Files'
@@ -27,6 +23,11 @@ chmod +x /tmp/files/*.sh
   --num-servers "${nomad_num_servers}" \
   --cluster-tag-name "${nomad_cluster_tag_name}"
 %{ else }
+# Install Docker and Java
+apt update
+apt upgrade -y
+apt install -y docker.io default-jre
+
 /tmp/files/boot-hashistack.sh \
   --prem-bucket "${prem_bucket}" \
   --consul-mode "${consul_mode}" \
@@ -54,7 +55,6 @@ chmod +x /tmp/files/*.sh
   --envconsul "${envconsul_ver}" \
   --terraform "${terraform_ver}" \
   --elk-stack "${elk_stack}"
-%{ endif }
 
 # Install CNI
 curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
@@ -75,3 +75,5 @@ echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
 sleep 5
 
 sudo systemctl restart nomad
+
+%{ endif }
