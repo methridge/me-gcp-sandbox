@@ -76,16 +76,9 @@ function create_install_paths {
 }
 
 function install_binaries {
-  local prem_bucket="$1"
-  local product="$2"
-  local version="$3"
-  local ent="$4"
-  local prem="$5"
-
-  if [[ ($ent == "true" && $prem == "true") ]]; then
-    log_error "Either --ent or --prem must be set, not both."
-    exit 1
-  fi
+  local product="$1"
+  local version="$2"
+  local ent="$3"
 
   if [[ ${version} == "" ]]; then
     version=$(jq -r ".\"${product}\".versions | keys | .[]" /tmp/index.json \
@@ -104,25 +97,10 @@ function install_binaries {
   local -r bin_dir="/usr/bin"
   local -r dest_path="${bin_dir}/${product}"
 
-  if [[ ${prem} = "true" ]]; then
-    log_info "Installing Premium Version"
-    if [[ ${product} == "nomad" ]]; then
-      log_info "From: gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+ent_linux_amd64.zip"
-      /snap/bin/gsutil cp \
-      gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+ent_linux_amd64.zip \
-      /tmp/${product}.zip
-    else
-      log_info "From: gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+prem_linux_amd64.zip"
-      /snap/bin/gsutil cp \
-      gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+prem_linux_amd64.zip \
-      /tmp/${product}.zip
-    fi
-  else
-    log_info "Installing Releases Version"
-    log_info "from url: https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip"
-    curl --silent --output /tmp/${product}.zip \
-    https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip
-  fi
+  log_info "Installing Releases Version"
+  log_info "from url: https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip"
+  curl --silent --output /tmp/${product}.zip \
+  https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip
 
   unzip -d /tmp /tmp/${product}.zip
 
@@ -229,7 +207,7 @@ function install {
   log_info "Installing Consul"
   create_user "consul"
   create_install_paths "consul"
-  install_binaries "${PREMIUM_BUCKET}" "consul" "${CONSUL_VERSION}" "${CONSUL_ENT}" "${CONSUL_PREMIUM}"
+  install_binaries "consul" "${CONSUL_VERSION}" "${CONSUL_ENT}"
   install_dnsmasq
   configure_dnsmasq_resolv
   create_service "consul"
@@ -240,7 +218,7 @@ function install {
   log_info "Installing Vault"
   create_user "vault"
   create_install_paths "vault"
-  install_binaries "${PREMIUM_BUCKET}" "vault" "${VAULT_VERSION}" "${VAULT_ENT}" "${VAULT_PREMIUM}"
+  install_binaries "vault" "${VAULT_VERSION}" "${VAULT_ENT}"
   create_service "vault"
   sudo mv /tmp/files/run-vault.sh /usr/local/bin/run-vault.sh
   sudo chmod a+x /usr/local/bin/run-vault.sh
@@ -249,16 +227,16 @@ function install {
   log_info "Installing Nomad"
   create_user "nomad"
   create_install_paths "nomad"
-  install_binaries "${PREMIUM_BUCKET}" "nomad" "${NOMAD_VERSION}" "${NOMAD_ENT}" "${NOMAD_PREMIUM}"
+  install_binaries "nomad" "${NOMAD_VERSION}" "${NOMAD_ENT}"
   create_service "nomad"
   sudo mv /tmp/files/run-nomad.sh /usr/local/bin/run-nomad.sh
   sudo chmod a+x /usr/local/bin/run-nomad.sh
   log_info "Nomad install complete"
 
   log_info "Installing additional HashiCorp products"
-  install_binaries "" "consul-template" "${CONSUL_TEMPLATE_VERSION}" "" ""
-  install_binaries "" "envconsul" "${ENVCONSUL_VERSION}" "" ""
-  install_binaries "" "terraform" "${TERRAFORM_VERSION}" "" ""
+  install_binaries "consul-template" "${CONSUL_TEMPLATE_VERSION}" ""
+  install_binaries "envconsul" "${ENVCONSUL_VERSION}" ""
+  install_binaries "terraform" "${TERRAFORM_VERSION}" ""
   log_info "Completed install of additional HashiCorp products"
 
   log_info "Installing Envoy Proxy"

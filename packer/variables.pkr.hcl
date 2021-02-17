@@ -3,11 +3,6 @@ variable "consul_ent" {
   default = true
 }
 
-variable "consul_premium" {
-  type    = bool
-  default = false
-}
-
 variable "consul_template_version" {
   type    = string
   default = ""
@@ -28,19 +23,9 @@ variable "nomad_ent" {
   default = true
 }
 
-variable "nomad_premium" {
-  type    = bool
-  default = false
-}
-
 variable "nomad_version" {
   type    = string
   default = ""
-}
-
-variable "premium_bucket" {
-  type    = string
-  default = "sandbox-bin"
 }
 
 variable "project_id" {
@@ -61,11 +46,6 @@ variable "username" {
 variable "vault_ent" {
   type    = bool
   default = true
-}
-
-variable "vault_premium" {
-  type    = bool
-  default = false
 }
 
 variable "vault_version" {

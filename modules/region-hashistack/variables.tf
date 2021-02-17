@@ -110,12 +110,6 @@ variable "consul_mode" {
   default     = "client"
 }
 
-variable "consul_prem" {
-  type        = bool
-  description = "Install Consul Premium binary - true/false - Defaults to false"
-  default     = false
-}
-
 variable "consul_primary_dc" {
   type        = string
   description = "Primary Consul Datacenter"
@@ -188,12 +182,6 @@ variable "nomad_mode" {
   default     = ""
 }
 
-variable "nomad_prem" {
-  type        = bool
-  description = "Install Nomad premium - bool"
-  default     = false
-}
-
 variable "nomad_server_cluster_size" {
   type        = number
   description = "Number of nodes to deploy for the Nomad server cluster"
@@ -209,12 +197,6 @@ variable "nomad_server_join_tag" {
 variable "nomad_version" {
   type        = string
   description = "Nomad version to install - Default to latest"
-  default     = ""
-}
-
-variable "prem_bucket" {
-  type        = string
-  description = "Name of bucket with Premium binaries"
   default     = ""
 }
 
@@ -240,12 +222,6 @@ variable "vault_mode" {
   type        = string
   description = "Vault mode - server/agent - Default to blank or none to not start vault"
   default     = ""
-}
-
-variable "vault_prem" {
-  type        = bool
-  description = "Install Vault premium binary - true/false - Defaults to false"
-  default     = false
 }
 
 variable "vault_storage" {
