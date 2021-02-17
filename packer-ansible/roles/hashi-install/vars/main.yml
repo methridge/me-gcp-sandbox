@@ -1,9 +1,0 @@
-consul_premium: false
-consul_version: "1.8.0+ent-beta2"
-consul_template_version: "0.25.0"
-envconsul_version: "0.9.3"
-nomad_premium: true
-nomad_version: "0.11.3"
-terraform_version: "0.12.26"
-vault_premium: false
-vault_version: "1.4.2+ent"

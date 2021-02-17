@@ -56,18 +56,15 @@ data "template_file" "region_bastion_startup_script" {
   template = file("${path.module}/templates/bastion.sh.tmpl")
   vars = {
     hashistack_image                  = var.hashistack_image
-    prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
     consul_version                    = var.consul_version
     consul_ent                        = var.consul_ent
-    consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     vault_mode                        = var.vault_mode
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
     vault_ent                         = var.vault_ent
-    vault_prem                        = var.vault_prem
     vault_auto_unseal_key_project_id  = ""
     vault_auto_unseal_key_region      = ""
     vault_auto_unseal_key_ring        = ""
@@ -75,7 +72,6 @@ data "template_file" "region_bastion_startup_script" {
     nomad_mode                        = var.nomad_mode
     nomad_version                     = var.nomad_version
     nomad_ent                         = var.nomad_ent
-    nomad_prem                        = var.nomad_prem
     nomad_num_servers                 = 0
     nomad_cluster_tag_name            = var.nomad_cluster_tag_name
     nomad_acl_enabled                 = var.nomad_acl_enabled
@@ -138,12 +134,10 @@ data "template_file" "region-consul-server-startup-script" {
   template = file("${path.module}/templates/consul-server.sh.tmpl")
   vars = {
     hashistack_image                  = var.hashistack_image
-    prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = "server"
     consul_version                    = var.consul_version
     consul_ent                        = var.consul_ent
-    consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     consul_cluster_wan_tag_name       = var.consul_wan_tag
     consul_primary_dc                 = var.consul_primary_dc
@@ -151,7 +145,6 @@ data "template_file" "region-consul-server-startup-script" {
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
     vault_ent                         = var.vault_ent
-    vault_prem                        = var.vault_prem
     vault_auto_unseal_key_project_id  = ""
     vault_auto_unseal_key_region      = ""
     vault_auto_unseal_key_ring        = ""
@@ -159,7 +152,6 @@ data "template_file" "region-consul-server-startup-script" {
     nomad_mode                        = var.nomad_mode
     nomad_version                     = var.nomad_version
     nomad_ent                         = var.nomad_ent
-    nomad_prem                        = var.nomad_prem
     nomad_num_servers                 = 0
     nomad_cluster_tag_name            = var.nomad_cluster_tag_name
     nomad_acl_enabled                 = var.nomad_acl_enabled
@@ -170,34 +162,6 @@ data "template_file" "region-consul-server-startup-script" {
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
-
-# ###
-# ### Consul Config files
-# ###
-# module "consul_server_config" {
-#   source                        = "../../../consul-config"
-#   enable_node_metadata          = true
-#   configure_autopilot           = true
-#   autopilot_redundancy_zone_tag = "zone"
-#   server                        = true
-# }
-
-# resource "google_storage_bucket_object" "consul_server_config_template" {
-#   name    = "consul/${var.region}/consul-server.tmpl"
-#   content = module.consul_server_config.config
-#   bucket  = "sandbox-bin"
-# }
-
-# module "consul_client_config" {
-#   source               = "../../../consul-config"
-#   enable_node_metadata = true
-# }
-
-# resource "google_storage_bucket_object" "consul_client_config_template" {
-#   name    = "consul/${var.region}/consul-client.tmpl"
-#   content = module.consul_client_config.config
-#   bucket  = "sandbox-bin"
-# }
 
 ###
 ### Nomad Server Cluster
@@ -225,18 +189,15 @@ data "template_file" "region_startup_script_nomad_server" {
   template = file("${path.module}/templates/nomad-server.sh.tmpl")
   vars = {
     hashistack_image                  = var.hashistack_image
-    prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
     consul_version                    = var.consul_version
     consul_ent                        = var.consul_ent
-    consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     vault_mode                        = var.vault_mode
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
     vault_ent                         = var.vault_ent
-    vault_prem                        = var.vault_prem
     vault_auto_unseal_key_project_id  = ""
     vault_auto_unseal_key_region      = ""
     vault_auto_unseal_key_ring        = ""
@@ -244,7 +205,6 @@ data "template_file" "region_startup_script_nomad_server" {
     nomad_mode                        = "server"
     nomad_version                     = var.nomad_version
     nomad_ent                         = var.nomad_ent
-    nomad_prem                        = var.nomad_prem
     nomad_num_servers                 = var.nomad_server_cluster_size
     nomad_cluster_tag_name            = var.nomad_cluster_tag_name
     nomad_acl_enabled                 = var.nomad_acl_enabled
@@ -282,18 +242,15 @@ data "template_file" "region_startup_script_nomad_client" {
   template = file("${path.module}/templates/nomad-client.sh.tmpl")
   vars = {
     hashistack_image                  = var.hashistack_image
-    prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
     consul_version                    = var.consul_version
     consul_ent                        = var.consul_ent
-    consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     vault_mode                        = var.vault_mode
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
     vault_ent                         = var.vault_ent
-    vault_prem                        = var.vault_prem
     vault_auto_unseal_key_project_id  = ""
     vault_auto_unseal_key_region      = ""
     vault_auto_unseal_key_ring        = ""
@@ -301,7 +258,6 @@ data "template_file" "region_startup_script_nomad_client" {
     nomad_mode                        = "client"
     nomad_version                     = var.nomad_version
     nomad_ent                         = var.nomad_ent
-    nomad_prem                        = var.nomad_prem
     nomad_num_servers                 = var.nomad_client_cluster_size
     nomad_cluster_tag_name            = var.nomad_cluster_tag_name
     nomad_acl_enabled                 = var.nomad_acl_enabled
@@ -378,18 +334,15 @@ data "template_file" "region_startup_script_vault" {
   template = file("${path.module}/templates/vault-server.sh.tmpl")
   vars = {
     hashistack_image                  = var.hashistack_image
-    prem_bucket                       = var.prem_bucket
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
     consul_version                    = var.consul_version
     consul_ent                        = var.consul_ent
-    consul_prem                       = var.consul_prem
     consul_cluster_tag_name           = "${var.region}-consul-servers"
     vault_mode                        = "server"
     vault_storage                     = var.vault_storage
     vault_version                     = var.vault_version
     vault_ent                         = var.vault_ent
-    vault_prem                        = var.vault_prem
     vault_auto_unseal_key_project_id  = var.project
     vault_auto_unseal_key_region      = var.region
     vault_auto_unseal_key_ring        = google_kms_key_ring.region_vault_key_ring.name
@@ -397,7 +350,6 @@ data "template_file" "region_startup_script_vault" {
     nomad_mode                        = var.nomad_mode
     nomad_version                     = var.nomad_version
     nomad_ent                         = var.nomad_ent
-    nomad_prem                        = var.nomad_prem
     nomad_num_servers                 = 0
     nomad_cluster_tag_name            = var.nomad_cluster_tag_name
     nomad_acl_enabled                 = var.nomad_acl_enabled

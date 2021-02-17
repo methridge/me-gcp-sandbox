@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Variables Needed
-## Premium Binary Bucket
-
 export DEBIAN_FRONTEND=noninteractive
 
 # Log the given message at the given level. All logs are written to stderr with a timestamp.
@@ -72,16 +69,9 @@ function create_install_paths {
 }
 
 function install_binaries {
-  local prem_bucket="$1"
-  local product="$2"
-  local version="$3"
-  local ent="$4"
-  local prem="$5"
-
-  if [[ ($ent == "true" && $prem == "true") ]]; then
-    log_error "Either --ent or --prem must be set, not both."
-    exit 1
-  fi
+  local product="$1"
+  local version="$2"
+  local ent="$3"
 
   if [[ ${version} == "" ]]; then
     version=$(jq -r ".\"${product}\".versions | keys | .[]" /tmp/index.json \
@@ -100,25 +90,10 @@ function install_binaries {
   local -r bin_dir="/usr/bin"
   local -r dest_path="${bin_dir}/${product}"
 
-  if [[ ${prem} = "true" ]]; then
-    log_info "Installing Premium Version"
-    if [[ ${product} == "nomad" ]]; then
-      log_info "From: gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+ent_linux_amd64.zip"
-      /snap/bin/gsutil cp \
-      gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+ent_linux_amd64.zip \
-      /tmp/${product}.zip
-    else
-      log_info "From: gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+prem_linux_amd64.zip"
-      /snap/bin/gsutil cp \
-      gs://${prem_bucket}/${product}/${version}/${product}-enterprise_${version}+prem_linux_amd64.zip \
-      /tmp/${product}.zip
-    fi
-  else
-    log_info "Installing Releases Version"
-    log_info "from url: https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip"
-    curl --silent --output /tmp/${product}.zip \
-    https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip
-  fi
+  log_info "Installing Releases Version"
+  log_info "from url: https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip"
+  curl --silent --output /tmp/${product}.zip \
+  https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip
 
   unzip -d /tmp /tmp/${product}.zip
 
@@ -282,17 +257,14 @@ function run_filebeat {
 }
 
 function install {
-  local prem_bucket=""
   local consul_mode=""
   local consul_version=""
   local consul_ent="false"
-  local consul_prem="false"
   local consul_cluster_tag_name=""
   local vault_mode=""
   local vault_storage="raft"
   local vault_version=""
   local vault_ent="false"
-  local vault_prem="false"
   local vault_auto_unseal_key_project_id=""
   local vault_auto_unseal_key_region=""
   local vault_auto_unseal_key_ring=""
@@ -300,7 +272,6 @@ function install {
   local nomad_mode=""
   local nomad_version=""
   local nomad_ent="false"
-  local nomad_prem="false"
   local nomad_num_servers="3"
   local nomad_cluster_tag_name=""
   local nomad_acl_enabled="false"
@@ -313,10 +284,6 @@ function install {
     local key="$1"
 
     case "$key" in
-      --prem-bucket)
-        prem_bucket="$2"
-        shift
-        ;;
       --consul-mode)
         consul_mode="$2"
         shift
@@ -327,10 +294,6 @@ function install {
         ;;
       --consul-ent)
         consul_ent="$2"
-        shift
-        ;;
-      --consul-prem)
-        consul_prem="$2"
         shift
         ;;
       --consul-cluster-tag-name)
@@ -355,10 +318,6 @@ function install {
         ;;
       --vault-ent)
         vault_ent="$2"
-        shift
-        ;;
-      --vault-prem)
-        vault_prem="$2"
         shift
         ;;
       --auto-unseal-key-project-id)
@@ -387,10 +346,6 @@ function install {
         ;;
       --nomad-ent)
         nomad_ent="$2"
-        shift
-        ;;
-      --nomad-prem)
-        nomad_prem="$2"
         shift
         ;;
       --nomad-num-servers)
@@ -438,7 +393,7 @@ function install {
   log_info "Installing Consul"
   create_user "consul"
   create_install_paths "consul"
-  install_binaries "$prem_bucket" "consul" "$consul_version" "$consul_ent" "$consul_prem"
+  install_binaries "consul" "$consul_version" "$consul_ent"
   copy_consul_certs
   install_dnsmasq
   configure_dnsmasq_resolv
@@ -449,7 +404,7 @@ function install {
   log_info "Installing Vault"
   create_user "vault"
   create_install_paths "vault"
-  install_binaries "$prem_bucket" "vault" "$vault_version" "$vault_ent" "$vault_prem"
+  install_binaries "vault" "$vault_version" "$vault_ent"
   create_service "vault"
   copy_vault_certs
   run_vault "$vault_mode" "$vault_storage" "$vault_auto_unseal_key_project_id" "$vault_auto_unseal_key_region" "$vault_auto_unseal_key_ring" "$vault_auto_unseal_crypto_key_name"
@@ -458,15 +413,15 @@ function install {
   log_info "Installing Nomad"
   create_user "nomad"
   create_install_paths "nomad"
-  install_binaries "$prem_bucket" "nomad" "$nomad_version" "$nomad_ent" "$nomad_prem"
+  install_binaries "nomad" "$nomad_version" "$nomad_ent"
   create_service "nomad"
   run_nomad "$nomad_mode" "$nomad_acl_enabled" "$nomad_num_servers" "$nomad_cluster_tag_name"
   log_info "Nomad install complete"
 
   log_info "Installing additional HashiCorp products"
-  install_binaries "" "consul-template" "$consul_template" "" ""
-  install_binaries "" "envconsul" "$envconsul" "" ""
-  install_binaries "" "terraform" "$terraform" "" ""
+  install_binaries "consul-template" "$consul_template" ""
+  install_binaries "envconsul" "$envconsul" ""
+  install_binaries "terraform" "$terraform" ""
   log_info "Completed install of additional HashiCorp products"
 
   if [[ $elk_stack == "true" ]]; then

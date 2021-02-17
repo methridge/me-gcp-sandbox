@@ -29,17 +29,14 @@ apt upgrade -y
 apt install -y docker.io default-jre
 
 /tmp/files/boot-hashistack.sh \
-  --prem-bucket "${prem_bucket}" \
   --consul-mode "${consul_mode}" \
   --consul-version "${consul_version}" \
   --consul-ent "${consul_ent}" \
-  --consul-prem "${consul_prem}" \
   --consul-cluster-tag-name "${consul_cluster_tag_name}" \
   --vault-mode "${vault_mode}" \
   --vault-storage "${vault_storage}" \
   --vault-version "${vault_version}" \
   --vault-ent "${vault_ent}" \
-  --vault-prem "${vault_prem}" \
   --auto-unseal-key-project-id "${vault_auto_unseal_key_project_id}" \
   --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
   --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
@@ -47,7 +44,6 @@ apt install -y docker.io default-jre
   --nomad-mode "${nomad_mode}" \
   --nomad-version "${nomad_version}" \
   --nomad-ent "${nomad_ent}" \
-  --nomad-prem "${nomad_prem}" \
   --nomad-num-servers "${nomad_num_servers}" \
   --nomad-cluster-tag-name "${nomad_cluster_tag_name}" \
   --nomad-acl-enabled "${nomad_acl_enabled}" \
