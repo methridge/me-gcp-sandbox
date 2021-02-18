@@ -15,7 +15,7 @@ build {
   }
   provisioner "file" {
     destination = "/tmp/files"
-    source      = "../modules/region-hashistack/bucket-files/"
+    source      = "./files/"
   }
   provisioner "shell" {
     environment_vars = [

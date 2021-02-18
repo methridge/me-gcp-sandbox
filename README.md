@@ -3,12 +3,13 @@
 This repository contains a series of Terraform configurations that can be used
 to build the following
 
-1. An instance of Terraform Enterprise using external services
 1. A "HashiStack" in a single or multiple regions
    1. Each "HashiStack" consists of the following:
       - 1 Bastion host
       - 3 Consul servers
-      - 3 Vault server using the above Consul servers for storage
+      - 3 Vault server
+        - Using Integrated Storage (Raft) -or-
+        - using the above Consul servers for storage
       - 3 Nomad servers
       - 3 Nomad clients
 
@@ -18,7 +19,7 @@ To use these Terraform configs you will need to setup the following.
 
 1. A GCP project
 1. A
-   [service account key file](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
+   [OAuth2 token](https://jryancanty.medium.com/stop-downloading-google-cloud-service-account-keys-1811d44a97d9)
    to use with Terraform
 1. (Optional) A domain name or subdomain
 1. (Optional) The above domain name setup in
@@ -28,38 +29,24 @@ To use these Terraform configs you will need to setup the following.
 
 Setup of our sandbox is done in two phases. The first phase is the base network
 and DNS creation. These components will rarely be changed and are needed by the
-other modules as inputs.
+other modules as inputs. It is recommended to store the state files for both of
+these in cloud storage (Terraform Cloud, GCP Storage Bucket, etc.), as we use
+these remote state files as data sources for all our sandbox deployments.
 
 The second phase will be the setup of our various testing environments.
 
 ### Setup Network Foundation
 
 We need to create the VPC and subnets that will be used by all the systems
-first. The Terraform config for this is in the `Network` folder.
+first. The Terraform config for this is in the
+[GCP Sandbox Network](https://github.com/methridge/me-gcp-sandbox-network) repo.
 
 ### Setup DNS Zone
 
 Create subdomain for services. The Terraform config for this is in the
-`DNS-Zone` folder.
-
-### Vault TLS Certificate
-
-We use `cfssl` to generate self-signed TLS certificates for Vault.
-
-Update the vaules in the `tls/vault-csr.json` file. Then run `make` or
-`make vault` to generate your TLS certificates.
-
-All of the produced `*.pem` files need to be copied from the `tls` folder to the
-`packer/files` folder.
+[GCP Sandbox DNS](https://github.com/methridge/me-gcp-sandbox-dns) repo.
 
 ## Sandbox Image
-
-### Premium Binaries
-
-If you are going to use the HashiCorp premium (pre-licensed) binaries, these
-will need to be uploaded to a storage bucket.
-
-:TODO: change storage bucket to variable
 
 ### Image login
 
@@ -74,14 +61,12 @@ username@hashicorp.com)
 We use a custom Ubuntu 20.04 image for all the "HashiStack" systems. This image
 is built with Packer.
 
-Update at least the following variables at the top of the file
-`packer/sandbox.json`
+Update at least the following variables in the file `packer/variables.pkr.hcl`
 
 ```
 "username":
-"gcp_account_file":
 "project_id":
 "zone":
 ```
 
-Build image with `packer build -force sandbox.json`
+Build image with `packer build -force .` while in the `packer` directory.

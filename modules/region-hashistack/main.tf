@@ -18,13 +18,6 @@ resource "google_storage_bucket" "config_bucket" {
   uniform_bucket_level_access = true
 }
 
-resource "google_storage_bucket_object" "config_files" {
-  for_each = fileset("${path.module}/bucket-files", "*")
-  name     = each.value
-  bucket   = google_storage_bucket.config_bucket.name
-  source   = "${path.module}/bucket-files/${each.value}"
-}
-
 ###
 ### Region Bastion Host
 ###

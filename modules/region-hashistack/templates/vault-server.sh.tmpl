@@ -9,12 +9,11 @@ while [[ ! -f /tmp/files/consul-tls/consul-gossip.txt && ! -f /tmp/files/consul-
   /snap/bin/gsutil -m rsync -r gs://${config_bucket} /tmp/files/
   sleep 5
 done
-chmod +x /tmp/files/*.sh
 
-%{ if hashistack_image }
 /usr/local/bin/run-consul.sh \
   --${consul_mode} \
   --cluster-tag-name "${consul_cluster_tag_name}"
+
 if [[ ${vault_auto_unseal_key_project_id} == "" ||
       ${vault_auto_unseal_key_region} == "" ||
       ${vault_auto_unseal_key_ring} == "" ||
@@ -22,6 +21,7 @@ if [[ ${vault_auto_unseal_key_project_id} == "" ||
   log_error "Auto Unseal parameters missing"
   exit 1
 fi
+
 /usr/local/bin/run-vault.sh \
   --vault-storage "${vault_storage}" \
   --tls-cert-file "/opt/vault/tls/vault.crt.pem" \
@@ -30,28 +30,3 @@ fi
   --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
   --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
   --auto-unseal-crypto-key-name "${vault_auto_unseal_crypto_key_name}"
-%{ else }
-/tmp/files/boot-hashistack.sh \
-  --consul-mode "${consul_mode}" \
-  --consul-version "${consul_version}" \
-  --consul-ent "${consul_ent}" \
-  --consul-cluster-tag-name "${consul_cluster_tag_name}" \
-  --vault-mode "${vault_mode}" \
-  --vault-storage "${vault_storage}" \
-  --vault-version "${vault_version}" \
-  --vault-ent "${vault_ent}" \
-  --auto-unseal-key-project-id "${vault_auto_unseal_key_project_id}" \
-  --auto-unseal-key-region "${vault_auto_unseal_key_region}" \
-  --auto-unseal-key-ring "${vault_auto_unseal_key_ring}" \
-  --auto-unseal-crypto-key-name "${vault_auto_unseal_crypto_key_name}" \
-  --nomad-mode "${nomad_mode}" \
-  --nomad-version "${nomad_version}" \
-  --nomad-ent "${nomad_ent}" \
-  --nomad-num-servers "${nomad_num_servers}" \
-  --nomad-cluster-tag-name "${nomad_cluster_tag_name}" \
-  --nomad-acl-enabled "${nomad_acl_enabled}" \
-  --consul-template "${consul_template_ver}" \
-  --envconsul "${envconsul_ver}" \
-  --terraform "${terraform_ver}" \
-  --elk-stack "${elk_stack}"
-%{ endif }

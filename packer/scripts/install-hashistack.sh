@@ -34,7 +34,6 @@ function log_error {
 function install_dependancies {
   log_info "Installing dependancies"
   sudo apt-get --quiet --assume-yes update
-  sudo apt-get --quiet --assume-yes upgrade
   sudo apt-get --quiet --assume-yes dist-upgrade
   sudo apt-get --quiet --assume-yes autoremove
   sudo apt-get --quiet --assume-yes install curl unzip jq net-tools docker.io default-jre
@@ -136,6 +135,10 @@ function create_service {
   sudo mv /tmp/files/${product}.service /usr/lib/systemd/system/${product}.service
   sudo chown root:root /usr/lib/systemd/system/${product}.service
   sudo chmod 644 /usr/lib/systemd/system/${product}.service
+
+  sudo mv /tmp/files/run-${product}.sh /usr/local/bin/run-${product}.sh
+  sudo chown root:root /usr/local/bin/run-${product}.sh
+  sudo chmod a+x /usr/local/bin/run-${product}.sh
 }
 
 function configure_mlock {
@@ -176,9 +179,6 @@ function run_filebeat {
 
 function install_envoy {
   log_info "Installing Envoy Proxy"
-  sudo apt-get --quiet --assume-yes install dnsmasq resolvconf
-
-  sudo apt-get --quiet --assume-yes update
 
   sudo apt-get --quiet --assume-yes install \
     apt-transport-https \
@@ -211,8 +211,6 @@ function install {
   install_dnsmasq
   configure_dnsmasq_resolv
   create_service "consul"
-  sudo mv /tmp/files/run-consul.sh /usr/local/bin/run-consul.sh
-  sudo chmod a+x /usr/local/bin/run-consul.sh
   log_info "Consul install completed"
 
   log_info "Installing Vault"
@@ -220,8 +218,6 @@ function install {
   create_install_paths "vault"
   install_binaries "vault" "${VAULT_VERSION}" "${VAULT_ENT}"
   create_service "vault"
-  sudo mv /tmp/files/run-vault.sh /usr/local/bin/run-vault.sh
-  sudo chmod a+x /usr/local/bin/run-vault.sh
   log_info "Vault install completed"
 
   log_info "Installing Nomad"
@@ -229,8 +225,6 @@ function install {
   create_install_paths "nomad"
   install_binaries "nomad" "${NOMAD_VERSION}" "${NOMAD_ENT}"
   create_service "nomad"
-  sudo mv /tmp/files/run-nomad.sh /usr/local/bin/run-nomad.sh
-  sudo chmod a+x /usr/local/bin/run-nomad.sh
   log_info "Nomad install complete"
 
   log_info "Installing additional HashiCorp products"
