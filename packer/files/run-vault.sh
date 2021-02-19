@@ -74,10 +74,12 @@ function generate_vault_config {
 
     cat > "/etc/vault.d/vault.hcl" <<EOF
 listener "tcp" {
-  address         = "0.0.0.0:8200"
-  cluster_address = "0.0.0.0:8201"
-  tls_cert_file   = "$tls_cert_file"
-  tls_key_file    = "$tls_key_file"
+  address                          = "0.0.0.0:8200"
+  cluster_address                  = "0.0.0.0:8201"
+  tls_cert_file                    = "$tls_cert_file"
+  tls_key_file                     = "$tls_key_file"
+  tls_disable_client_certs         = "true"
+  x_forwarded_for_authorized_addrs = "0.0.0.0/0"
 }
 
 cluster_addr  = "https://$instance_ip_address:8201"
@@ -92,7 +94,6 @@ seal "gcpckms" {
 
 storage "raft" {
   path = "/opt/vault/data"
-  node_id = "vault-0"
 }
 
 service_registration "consul" {
@@ -105,21 +106,24 @@ service_registration "consul" {
 }
 
 telemetry {
-  dogstatsd_addr = "localhost:8125"
-  disable_hostname = true
+  dogstatsd_addr                 = "localhost:8125"
+  disable_hostname               = true
+  unauthenticated_metrics_access = "true"
 }
 
 ui = true
 EOF
   elif [[ $vault_storage == "consul" ]]; then
-    log_info "Configuring Integrated Storage."
+    log_info "Configuring Consul Storage."
 
     cat > "/etc/vault.d/vault.hcl" <<EOF
 listener "tcp" {
-  address         = "0.0.0.0:8200"
-  cluster_address = "0.0.0.0:8201"
-  tls_cert_file   = "$tls_cert_file"
-  tls_key_file    = "$tls_key_file"
+  address                          = "0.0.0.0:8200"
+  cluster_address                  = "0.0.0.0:8201"
+  tls_cert_file                    = "$tls_cert_file"
+  tls_key_file                     = "$tls_key_file"
+  tls_disable_client_certs         = "true"
+  x_forwarded_for_authorized_addrs = "0.0.0.0/0"
 }
 
 cluster_addr  = "https://$instance_ip_address:8201"
@@ -135,12 +139,16 @@ seal "gcpckms" {
 storage "consul" {
   address = "127.0.0.1:8501"
   scheme = "https"
-  path    = "vault"
   token   = "$master_token"
   tls_ca_file = "/opt/consul/tls/consul-agent-ca.pem"
   tls_cert_file = "/opt/consul/tls/${instance_region}-server-consul-0.pem"
   tls_key_file = "/opt/consul/tls/${instance_region}-server-consul-0-key.pem"
+}
 
+telemetry {
+  dogstatsd_addr                 = "localhost:8125"
+  disable_hostname               = true
+  unauthenticated_metrics_access = "true"
 }
 
 ui = true

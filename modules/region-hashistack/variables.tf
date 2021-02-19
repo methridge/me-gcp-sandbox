@@ -56,12 +56,6 @@ variable "sandbox_ca_key" {
 # Optional with defaults
 #
 
-variable "hashistack_image" {
-  type        = bool
-  description = "Is this a packer hashistack image or base ubuntu"
-  default     = false
-}
-
 variable "machine_type" {
   type        = string
   description = "Instance machine type"
@@ -98,12 +92,6 @@ variable "consul_enable_non_voting" {
   default     = false
 }
 
-variable "consul_ent" {
-  type        = bool
-  description = "Install Consul Enterprise binary - true/false - Defaults to false"
-  default     = false
-}
-
 variable "consul_mode" {
   type        = string
   description = "Consul mode - client/server - Defaults to client"
@@ -113,18 +101,6 @@ variable "consul_mode" {
 variable "consul_primary_dc" {
   type        = string
   description = "Primary Consul Datacenter"
-  default     = ""
-}
-
-variable "consul_template_ver" {
-  type        = string
-  description = "Consul Template version to install - Default to latest"
-  default     = ""
-}
-
-variable "consul_version" {
-  type        = string
-  description = "Consul Version - Default to latest"
   default     = ""
 }
 
@@ -138,12 +114,6 @@ variable "custom_tags" {
   type        = list(string)
   description = "A list of tags that will be added to the Compute Instance Template in addition to the tags automatically added by this module."
   default     = []
-}
-
-variable "envconsul_ver" {
-  type        = string
-  description = "EnvConsul version to install - Default to latest"
-  default     = ""
 }
 
 variable "elk_stack" {
@@ -170,12 +140,6 @@ variable "nomad_cluster_tag_name" {
   default     = ""
 }
 
-variable "nomad_ent" {
-  type        = bool
-  description = "Install Nomad Enterprise - bool"
-  default     = false
-}
-
 variable "nomad_mode" {
   type        = string
   description = "Nomad mode none/client/server - Default blank for none"
@@ -194,44 +158,14 @@ variable "nomad_server_join_tag" {
   default     = ""
 }
 
-variable "nomad_version" {
-  type        = string
-  description = "Nomad version to install - Default to latest"
-  default     = ""
-}
-
-variable "terraform_ver" {
-  type        = string
-  description = "Terraform version to install - Default to latest"
-  default     = ""
-}
-
 variable "vault_cluster_size" {
   type        = number
   description = "Number of nodes to deploy for the Vault cluster"
   default     = 3
 }
 
-variable "vault_ent" {
-  type        = bool
-  description = "Install Vault Enterprise binary - true/false - Defaults to false"
-  default     = false
-}
-
-variable "vault_mode" {
-  type        = string
-  description = "Vault mode - server/agent - Default to blank or none to not start vault"
-  default     = ""
-}
-
 variable "vault_storage" {
   type        = string
   description = "Vault storage to use - raft/consul - Defaults to blank for raft"
-  default     = ""
-}
-
-variable "vault_version" {
-  type        = string
-  description = "Vault version to install - Defaults to blank for latest"
   default     = ""
 }

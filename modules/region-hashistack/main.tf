@@ -18,13 +18,6 @@ resource "google_storage_bucket" "config_bucket" {
   uniform_bucket_level_access = true
 }
 
-resource "google_storage_bucket_object" "config_files" {
-  for_each = fileset("${path.module}/bucket-files", "*")
-  name     = each.value
-  bucket   = google_storage_bucket.config_bucket.name
-  source   = "${path.module}/bucket-files/${each.value}"
-}
-
 ###
 ### Region Bastion Host
 ###
@@ -55,30 +48,10 @@ resource "google_compute_instance" "region_bastion" {
 data "template_file" "region_bastion_startup_script" {
   template = file("${path.module}/templates/bastion.sh.tmpl")
   vars = {
-    hashistack_image                  = var.hashistack_image
-    config_bucket                     = google_storage_bucket.config_bucket.name
-    consul_mode                       = var.consul_mode
-    consul_version                    = var.consul_version
-    consul_ent                        = var.consul_ent
-    consul_cluster_tag_name           = "${var.region}-consul-servers"
-    vault_mode                        = var.vault_mode
-    vault_storage                     = var.vault_storage
-    vault_version                     = var.vault_version
-    vault_ent                         = var.vault_ent
-    vault_auto_unseal_key_project_id  = ""
-    vault_auto_unseal_key_region      = ""
-    vault_auto_unseal_key_ring        = ""
-    vault_auto_unseal_crypto_key_name = ""
-    nomad_mode                        = var.nomad_mode
-    nomad_version                     = var.nomad_version
-    nomad_ent                         = var.nomad_ent
-    nomad_num_servers                 = 0
-    nomad_cluster_tag_name            = var.nomad_cluster_tag_name
-    nomad_acl_enabled                 = var.nomad_acl_enabled
-    consul_template_ver               = var.consul_template_ver
-    envconsul_ver                     = var.envconsul_ver
-    terraform_ver                     = var.terraform_ver
-    elk_stack                         = var.elk_stack
+    config_bucket           = google_storage_bucket.config_bucket.name
+    consul_mode             = var.consul_mode
+    consul_cluster_tag_name = "${var.region}-consul-servers"
+    elk_stack               = var.elk_stack
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
@@ -133,32 +106,11 @@ module "region_consul_cluster" {
 data "template_file" "region-consul-server-startup-script" {
   template = file("${path.module}/templates/consul-server.sh.tmpl")
   vars = {
-    hashistack_image                  = var.hashistack_image
-    config_bucket                     = google_storage_bucket.config_bucket.name
-    consul_mode                       = "server"
-    consul_version                    = var.consul_version
-    consul_ent                        = var.consul_ent
-    consul_cluster_tag_name           = "${var.region}-consul-servers"
-    consul_cluster_wan_tag_name       = var.consul_wan_tag
-    consul_primary_dc                 = var.consul_primary_dc
-    vault_mode                        = var.vault_mode
-    vault_storage                     = var.vault_storage
-    vault_version                     = var.vault_version
-    vault_ent                         = var.vault_ent
-    vault_auto_unseal_key_project_id  = ""
-    vault_auto_unseal_key_region      = ""
-    vault_auto_unseal_key_ring        = ""
-    vault_auto_unseal_crypto_key_name = ""
-    nomad_mode                        = var.nomad_mode
-    nomad_version                     = var.nomad_version
-    nomad_ent                         = var.nomad_ent
-    nomad_num_servers                 = 0
-    nomad_cluster_tag_name            = var.nomad_cluster_tag_name
-    nomad_acl_enabled                 = var.nomad_acl_enabled
-    consul_template_ver               = var.consul_template_ver
-    envconsul_ver                     = var.envconsul_ver
-    terraform_ver                     = var.terraform_ver
-    elk_stack                         = var.elk_stack
+    config_bucket               = google_storage_bucket.config_bucket.name
+    consul_mode                 = "server"
+    consul_cluster_tag_name     = "${var.region}-consul-servers"
+    consul_cluster_wan_tag_name = var.consul_wan_tag
+    consul_primary_dc           = var.consul_primary_dc
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
@@ -188,30 +140,13 @@ module "region_nomad_servers" {
 data "template_file" "region_startup_script_nomad_server" {
   template = file("${path.module}/templates/nomad-server.sh.tmpl")
   vars = {
-    hashistack_image                  = var.hashistack_image
-    config_bucket                     = google_storage_bucket.config_bucket.name
-    consul_mode                       = var.consul_mode
-    consul_version                    = var.consul_version
-    consul_ent                        = var.consul_ent
-    consul_cluster_tag_name           = "${var.region}-consul-servers"
-    vault_mode                        = var.vault_mode
-    vault_storage                     = var.vault_storage
-    vault_version                     = var.vault_version
-    vault_ent                         = var.vault_ent
-    vault_auto_unseal_key_project_id  = ""
-    vault_auto_unseal_key_region      = ""
-    vault_auto_unseal_key_ring        = ""
-    vault_auto_unseal_crypto_key_name = ""
-    nomad_mode                        = "server"
-    nomad_version                     = var.nomad_version
-    nomad_ent                         = var.nomad_ent
-    nomad_num_servers                 = var.nomad_server_cluster_size
-    nomad_cluster_tag_name            = var.nomad_cluster_tag_name
-    nomad_acl_enabled                 = var.nomad_acl_enabled
-    consul_template_ver               = var.consul_template_ver
-    envconsul_ver                     = var.envconsul_ver
-    terraform_ver                     = var.terraform_ver
-    elk_stack                         = var.elk_stack
+    config_bucket           = google_storage_bucket.config_bucket.name
+    consul_mode             = var.consul_mode
+    consul_cluster_tag_name = "${var.region}-consul-servers"
+    nomad_mode              = "server"
+    nomad_num_servers       = var.nomad_server_cluster_size
+    nomad_cluster_tag_name  = var.nomad_cluster_tag_name
+    nomad_acl_enabled       = var.nomad_acl_enabled
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
@@ -241,30 +176,13 @@ module "region_nomad_clients" {
 data "template_file" "region_startup_script_nomad_client" {
   template = file("${path.module}/templates/nomad-client.sh.tmpl")
   vars = {
-    hashistack_image                  = var.hashistack_image
-    config_bucket                     = google_storage_bucket.config_bucket.name
-    consul_mode                       = var.consul_mode
-    consul_version                    = var.consul_version
-    consul_ent                        = var.consul_ent
-    consul_cluster_tag_name           = "${var.region}-consul-servers"
-    vault_mode                        = var.vault_mode
-    vault_storage                     = var.vault_storage
-    vault_version                     = var.vault_version
-    vault_ent                         = var.vault_ent
-    vault_auto_unseal_key_project_id  = ""
-    vault_auto_unseal_key_region      = ""
-    vault_auto_unseal_key_ring        = ""
-    vault_auto_unseal_crypto_key_name = ""
-    nomad_mode                        = "client"
-    nomad_version                     = var.nomad_version
-    nomad_ent                         = var.nomad_ent
-    nomad_num_servers                 = var.nomad_client_cluster_size
-    nomad_cluster_tag_name            = var.nomad_cluster_tag_name
-    nomad_acl_enabled                 = var.nomad_acl_enabled
-    consul_template_ver               = var.consul_template_ver
-    envconsul_ver                     = var.envconsul_ver
-    terraform_ver                     = var.terraform_ver
-    elk_stack                         = var.elk_stack
+    config_bucket           = google_storage_bucket.config_bucket.name
+    consul_mode             = var.consul_mode
+    consul_cluster_tag_name = "${var.region}-consul-servers"
+    nomad_mode              = "client"
+    nomad_num_servers       = var.nomad_client_cluster_size
+    nomad_cluster_tag_name  = var.nomad_cluster_tag_name
+    nomad_acl_enabled       = var.nomad_acl_enabled
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
@@ -333,30 +251,14 @@ module "region_vault_cluster" {
 data "template_file" "region_startup_script_vault" {
   template = file("${path.module}/templates/vault-server.sh.tmpl")
   vars = {
-    hashistack_image                  = var.hashistack_image
     config_bucket                     = google_storage_bucket.config_bucket.name
     consul_mode                       = var.consul_mode
-    consul_version                    = var.consul_version
-    consul_ent                        = var.consul_ent
     consul_cluster_tag_name           = "${var.region}-consul-servers"
-    vault_mode                        = "server"
     vault_storage                     = var.vault_storage
-    vault_version                     = var.vault_version
-    vault_ent                         = var.vault_ent
     vault_auto_unseal_key_project_id  = var.project
     vault_auto_unseal_key_region      = var.region
     vault_auto_unseal_key_ring        = google_kms_key_ring.region_vault_key_ring.name
     vault_auto_unseal_crypto_key_name = google_kms_crypto_key.region_crypto_key.name
-    nomad_mode                        = var.nomad_mode
-    nomad_version                     = var.nomad_version
-    nomad_ent                         = var.nomad_ent
-    nomad_num_servers                 = 0
-    nomad_cluster_tag_name            = var.nomad_cluster_tag_name
-    nomad_acl_enabled                 = var.nomad_acl_enabled
-    consul_template_ver               = var.consul_template_ver
-    envconsul_ver                     = var.envconsul_ver
-    terraform_ver                     = var.terraform_ver
-    elk_stack                         = var.elk_stack
   }
   depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
