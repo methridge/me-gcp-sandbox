@@ -22,6 +22,10 @@ output "instance_group_full_url" {
   value = google_compute_region_instance_group_manager.consul_server.instance_group
 }
 
+output "instance_group_instance_group" {
+  value = google_compute_region_instance_group_manager.consul_server.instance_group
+}
+
 output "instance_template_url" {
   value = data.template_file.compute_instance_template_self_link.rendered
 }
@@ -85,4 +89,8 @@ output "firewall_rule_inbound_dns_name" {
     concat(google_compute_firewall.allow_inbound_dns.*.name, [""]),
     0,
   )
+}
+
+output "cluster_health_check" {
+  value = google_compute_health_check.consul_hc.self_link
 }
