@@ -18,8 +18,16 @@ output "instance_group_name" {
   value = google_compute_region_instance_group_manager.nomad.name
 }
 
+output "instance_group_instance_group" {
+  value = google_compute_region_instance_group_manager.nomad.instance_group
+}
+
 output "instance_template_url" {
   value = data.template_file.compute_instance_template_self_link.rendered
+}
+
+output "cluster_health_check" {
+  value = google_compute_health_check.nomad_hc.self_link
 }
 
 # output "firewall_rule_allow_inbound_http_url" {

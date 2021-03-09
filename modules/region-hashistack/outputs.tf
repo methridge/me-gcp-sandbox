@@ -6,6 +6,13 @@ output "region-lb-ip" {
   value = google_compute_address.region-pub-ip.address
 }
 
+# output "region-lb-global-ip" {
+#   value = google_compute_global_address.region-global-pub-ip.address
+# }
+
+output "region-lb-global-ip" {
+  value = module.global-https-lb.region-lb-global-ip
+}
 output "consul_server_key_pem" {
   value = module.region_consul_tls.consul_server_key_pem
 }

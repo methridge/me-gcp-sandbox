@@ -167,10 +167,10 @@ module "region_nomad_clients" {
   allowed_inbound_tags_http = var.custom_tags
   allowed_inbound_tags_rpc  = var.custom_tags
   allowed_inbound_tags_serf = var.custom_tags
-  instance_group_target_pools = [
-    module.region-traefik-lb.target_pool,
-    module.region-traefik-admin-lb.target_pool
-  ]
+  # instance_group_target_pools = [
+  #   module.region-traefik-lb.target_pool,
+  #   module.region-traefik-admin-lb.target_pool
+  # ]
 }
 
 data "template_file" "region_startup_script_nomad_client" {
@@ -335,45 +335,59 @@ module "region-nomad-lb" {
   allowed_ips  = var.allowed_ips
 }
 
-module "region-traefik-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-traefik-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 8082
-    request_path        = "/ping"
-    host                = "localhost"
-  }
-  service_port = 8080
-  target_tags  = ["${var.region}-traefik-clients"]
-  allowed_ips  = var.allowed_ips
-}
+# module "region-traefik-lb" {
+#   source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
+#   project    = var.project
+#   region     = var.region
+#   name       = "${var.region}-traefik-lb"
+#   network    = var.network
+#   ip_address = google_compute_address.region-pub-ip.address
+#   health_check = {
+#     check_interval_sec  = 10
+#     healthy_threshold   = 5
+#     timeout_sec         = 5
+#     unhealthy_threshold = 10
+#     port                = 8082
+#     request_path        = "/ping"
+#     host                = "localhost"
+#   }
+#   service_port = 8080
+#   target_tags  = ["${var.region}-traefik-clients"]
+#   allowed_ips  = var.allowed_ips
+# }
 
-module "region-traefik-admin-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-traefik-admin-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 8082
-    request_path        = "/ping"
-    host                = "localhost"
-  }
-  service_port = 8081
-  target_tags  = ["${var.region}-traefik-clients"]
-  allowed_ips  = var.allowed_ips
-}
+# module "region-traefik-admin-lb" {
+#   source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
+#   project    = var.project
+#   region     = var.region
+#   name       = "${var.region}-traefik-admin-lb"
+#   network    = var.network
+#   ip_address = google_compute_address.region-pub-ip.address
+#   health_check = {
+#     check_interval_sec  = 10
+#     healthy_threshold   = 5
+#     timeout_sec         = 5
+#     unhealthy_threshold = 10
+#     port                = 8082
+#     request_path        = "/ping"
+#     host                = "localhost"
+#   }
+#   service_port = 8081
+#   target_tags  = ["${var.region}-traefik-clients"]
+#   allowed_ips  = var.allowed_ips
+# }
 
+module "global-https-lb" {
+  source        = "../region-glb"
+  project       = var.project
+  region        = var.region
+  consul_ig     = module.region_consul_cluster.instance_group_instance_group
+  consul_hc     = module.region_consul_cluster.cluster_health_check
+  nomad_ig      = module.region_nomad_servers.instance_group_instance_group
+  nomad_hc      = module.region_nomad_servers.cluster_health_check
+  vault_ig      = module.region_vault_cluster.instance_group_instance_group
+  vault_hc      = module.region_vault_cluster.cluster_health_check
+  ip_allow_list = var.allowed_ips
+  admin_email   = "methridge@hashicorp.com"
+  dnszone       = var.dnszone
+}
