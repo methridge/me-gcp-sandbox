@@ -123,6 +123,7 @@ acl {
   tokens {
     master = "${master_token}"
     agent  = "${master_token}"
+    default  = "${master_token}"
     replication = "${master_token}"
   }
 }
