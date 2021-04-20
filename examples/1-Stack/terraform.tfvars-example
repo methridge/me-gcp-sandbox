@@ -1,0 +1,10 @@
+username                 = "methridge"
+project                  = "methridge-sandbox"
+region                   = "us-west1"
+admin_ip                 = ["200.200.200.200/32"]
+machine_type             = "n1-standard-1"
+consul_ent               = true
+vault_ent                = true
+nomad_ent                = true
+elk_stack                = false
+consul_enable_non_voting = true
