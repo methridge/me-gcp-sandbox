@@ -1,0 +1,12 @@
+variable "username" {}
+variable "project" {}
+variable "admin_ip" {}
+variable "machine_type" {}
+variable "prem_bucket" {}
+variable "consul_ent" {}
+variable "vault_ent" {}
+variable "nomad_ent" {}
+variable "region-name-1" {}
+variable "region-name-2" {}
+variable "region-name-3" {}
+variable "elk_stack" {}
