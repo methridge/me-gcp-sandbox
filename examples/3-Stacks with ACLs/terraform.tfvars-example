@@ -5,6 +5,7 @@ machine_type     = "n1-standard-1"
 region-name-1    = "us-west1"
 region-name-2    = "us-central1"
 region-name-3    = "us-east1"
+prem_bucket      = "sandbox-bin"
 consul_ent       = true
 vault_ent        = true
 nomad_ent        = true

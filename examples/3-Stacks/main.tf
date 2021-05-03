@@ -10,7 +10,7 @@ resource "random_id" "consul_gossip_encryption_key" {
 }
 
 module "sandbox-ca" {
-  source = "../../modules/sandbox-ca"
+  source = "../../GitHubs/ea-gcp-sandbox/modules/sandbox-ca"
 }
 
 resource "local_file" "sandbox_ca" {
@@ -26,7 +26,7 @@ resource "local_file" "sandbox_ca_key" {
 # Region-1 Stack
 module "region-1-stack" {
   # source              = "github.com/methridge/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
-  source                = "../../modules/region-hashistack"
+  source                = "../../GitHubs/ea-gcp-sandbox/modules/region-hashistack"
   project               = var.project
   region                = var.region-name-1
   image                 = data.google_compute_image.my_image.name
@@ -127,7 +127,7 @@ resource "local_file" "region_1_vault_server_pem_key" {
 
 resource "null_resource" "r1-stack-init" {
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-init.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-init.sh"
     working_dir = "${path.module}/r1/"
     environment = {
       LB_IP    = module.region-1-stack.region-lb-ip
@@ -136,7 +136,7 @@ resource "null_resource" "r1-stack-init" {
     }
   }
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-destroy.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-destroy.sh"
     working_dir = "${path.module}/r1/"
     when        = destroy
   }
@@ -146,7 +146,7 @@ resource "null_resource" "r1-stack-init" {
 # Region-2 Stack
 module "region-2-stack" {
   # source              = "github.com/methridge/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
-  source                = "../../modules/region-hashistack"
+  source                = "../../GitHubs/ea-gcp-sandbox/modules/region-hashistack"
   project               = var.project
   region                = var.region-name-2
   image                 = data.google_compute_image.my_image.name
@@ -247,7 +247,7 @@ resource "local_file" "region_2_vault_server_pem_key" {
 
 resource "null_resource" "r2-stack-init" {
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-init.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-init.sh"
     working_dir = "${path.module}/r2/"
     environment = {
       LB_IP    = module.region-2-stack.region-lb-ip
@@ -256,7 +256,7 @@ resource "null_resource" "r2-stack-init" {
     }
   }
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-destroy.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-destroy.sh"
     working_dir = "${path.module}/r2/"
     when        = destroy
   }
@@ -266,7 +266,7 @@ resource "null_resource" "r2-stack-init" {
 # Region-3 Stack
 module "region-3-stack" {
   # source                = "github.com/methridge/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
-  source                = "../../modules/region-hashistack"
+  source                = "../../GitHubs/ea-gcp-sandbox/modules/region-hashistack"
   project               = var.project
   region                = var.region-name-3
   image                 = data.google_compute_image.my_image.name
@@ -367,7 +367,7 @@ resource "local_file" "region_3_vault_server_pem_key" {
 
 resource "null_resource" "r3-stack-init" {
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-init.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-init.sh"
     working_dir = "${path.module}/r3/"
     environment = {
       LB_IP    = module.region-3-stack.region-lb-ip
@@ -376,7 +376,7 @@ resource "null_resource" "r3-stack-init" {
     }
   }
   provisioner "local-exec" {
-    command     = "../../../scripts/stack-destroy.sh"
+    command     = "../../../GitHubs/ea-gcp-sandbox/scripts/stack-destroy.sh"
     working_dir = "${path.module}/r3/"
     when        = destroy
   }

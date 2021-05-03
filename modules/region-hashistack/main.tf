@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.12.24"
+  required_version = ">= 0.15"
 }
 
 data "google_compute_zones" "zones" {
