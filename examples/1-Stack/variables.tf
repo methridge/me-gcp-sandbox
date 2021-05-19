@@ -1,6 +1,7 @@
 variable "username" {}
 variable "project" {}
 variable "region" {}
+variable "region_output" {}
 variable "admin_ip" {}
 variable "machine_type" {}
 variable "consul_ent" {}

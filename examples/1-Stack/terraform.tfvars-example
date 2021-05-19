@@ -1,6 +1,7 @@
 username                 = "methridge"
 project                  = "methridge-sandbox"
 region                   = "us-west1"
+region_output            = "/Users/example/testing/region"
 admin_ip                 = ["200.200.200.200/32"]
 machine_type             = "n1-standard-1"
 consul_ent               = true
