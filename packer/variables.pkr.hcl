@@ -18,6 +18,11 @@ variable "consul_ent" {
   default = true
 }
 
+variable "consul_lic_file" {
+  type    = string
+  default = ""
+}
+
 variable "consul_template_version" {
   type    = string
   default = ""
@@ -38,6 +43,11 @@ variable "nomad_ent" {
   default = true
 }
 
+variable "nomad_lic_file" {
+  type    = string
+  default = ""
+}
+
 variable "nomad_version" {
   type    = string
   default = ""
@@ -51,6 +61,11 @@ variable "terraform_version" {
 variable "vault_ent" {
   type    = bool
   default = true
+}
+
+variable "vault_lic_file" {
+  type    = string
+  default = ""
 }
 
 variable "vault_version" {

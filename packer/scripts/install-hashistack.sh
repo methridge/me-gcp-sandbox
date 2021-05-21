@@ -69,6 +69,7 @@ function create_install_paths {
   log_info "Creating install dirs for $app"
   sudo mkdir --parents /etc/$app.d
   sudo mkdir --parents /opt/$app/data
+  sudo mkdir --parents /opt/$app/lic
   sudo mkdir --parents /opt/$app/log
   sudo mkdir --parents /opt/$app/tls
   sudo chown --recursive $app:$app /opt/$app
@@ -103,10 +104,17 @@ function install_binaries {
 
   unzip -d /tmp /tmp/${product}.zip
 
-  log_info "Moving $product binary to ${dest_path}"
+  log_info "Moving ${product} binary to ${dest_path}"
   sudo mv "/tmp/${product}" "${dest_path}"
   sudo chown "root:root" "${dest_path}"
   sudo chmod a+x "${dest_path}"
+}
+
+function install_license {
+  local product="$1"
+
+  log_info "Placing ${product} license file in /opt/${product}/lic"
+  sudo mv "/tmp/licenses/${product}.hclic" "/opt/${product}/lic/${product}.hclic"
 }
 
 function install_dnsmasq {
@@ -208,6 +216,7 @@ function install {
   create_user "consul"
   create_install_paths "consul"
   install_binaries "consul" "${CONSUL_VERSION}" "${CONSUL_ENT}"
+  install_license "consul"
   install_dnsmasq
   configure_dnsmasq_resolv
   create_service "consul"
@@ -217,6 +226,7 @@ function install {
   create_user "vault"
   create_install_paths "vault"
   install_binaries "vault" "${VAULT_VERSION}" "${VAULT_ENT}"
+  install_license "vault"
   create_service "vault"
   log_info "Vault install completed"
 
@@ -224,6 +234,7 @@ function install {
   create_user "nomad"
   create_install_paths "nomad"
   install_binaries "nomad" "${NOMAD_VERSION}" "${NOMAD_ENT}"
+  install_license "nomad"
   create_service "nomad"
   log_info "Nomad install complete"
 

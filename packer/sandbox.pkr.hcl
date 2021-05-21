@@ -18,6 +18,21 @@ build {
     source      = "./files/"
   }
   provisioner "shell" {
+    inline = ["mkdir /tmp/licenses"]
+  }
+  provisioner "file" {
+    destination = "/tmp/licenses/consul.hclic"
+    source      = var.consul_lic_file
+  }
+  provisioner "file" {
+    destination = "/tmp/licenses/nomad.hclic"
+    source      = var.nomad_lic_file
+  }
+  provisioner "file" {
+    destination = "/tmp/licenses/vault.hclic"
+    source      = var.vault_lic_file
+  }
+  provisioner "shell" {
     environment_vars = [
       "CONSUL_ENT=${var.consul_ent}",
       "CONSUL_VERSION=${var.consul_version}",
