@@ -70,8 +70,10 @@ done
 
 consul acl policy create -name 'list-all-nodes' -rules 'node_prefix "" { policy = "read" }'
 consul acl token update -id 00000000-0000-0000-0000-000000000002 -policy-name list-all-nodes -description "Anonymous Token - Can List Nodes"
-consul acl policy create -name 'service-consul-read' -rules 'service "consul" { policy = "read" }'
-consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name service-consul-read
+consul acl policy create -name 'service-read' -rules 'service_prefix "" { policy = "read" }'
+consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name service-read
+consul acl policy create -name 'operator-read' -rules 'operator = "read"'
+consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name operator-read
 
 export VAULT_ADDR=https://lb.${DNS_ZONE}:8200
 export VAULT_CACERT=.tmp/sandbox-ca.pem

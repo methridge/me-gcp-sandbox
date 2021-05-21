@@ -8,6 +8,16 @@ variable "region" {
   description = "GCP Region for Hashistack deployment"
 }
 
+variable "region_tls_priv_key" {
+  type        = string
+  description = "TLS Private Key"
+}
+
+variable "region_tls_cert_chain" {
+  type        = string
+  description = "TLS Public Cert Chain"
+}
+
 variable "ip_allow_list" {
   type        = list(any)
   description = "IP CIDRs to alow. Defaults to the entire world."

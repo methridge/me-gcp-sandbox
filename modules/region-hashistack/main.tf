@@ -378,16 +378,18 @@ module "region-nomad-lb" {
 # }
 
 module "global-https-lb" {
-  source        = "../region-glb"
-  project       = var.project
-  region        = var.region
-  consul_ig     = module.region_consul_cluster.instance_group_instance_group
-  consul_hc     = module.region_consul_cluster.cluster_health_check
-  nomad_ig      = module.region_nomad_servers.instance_group_instance_group
-  nomad_hc      = module.region_nomad_servers.cluster_health_check
-  vault_ig      = module.region_vault_cluster.instance_group_instance_group
-  vault_hc      = module.region_vault_cluster.cluster_health_check
-  ip_allow_list = var.allowed_ips
-  admin_email   = "methridge@hashicorp.com"
-  dnszone       = var.dnszone
+  source                = "../region-glb"
+  project               = var.project
+  region                = var.region
+  region_tls_priv_key   = var.region_tls_priv_key
+  region_tls_cert_chain = var.region_tls_cert_chain
+  consul_ig             = module.region_consul_cluster.instance_group_instance_group
+  consul_hc             = module.region_consul_cluster.cluster_health_check
+  nomad_ig              = module.region_nomad_servers.instance_group_instance_group
+  nomad_hc              = module.region_nomad_servers.cluster_health_check
+  vault_ig              = module.region_vault_cluster.instance_group_instance_group
+  vault_hc              = module.region_vault_cluster.cluster_health_check
+  ip_allow_list         = var.allowed_ips
+  admin_email           = "methridge@hashicorp.com"
+  dnszone               = var.dnszone
 }

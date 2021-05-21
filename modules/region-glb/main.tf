@@ -1,47 +1,14 @@
-terraform {
-  required_providers {
-    acme = {
-      source = "vancluever/acme"
-    }
-  }
-}
-
 locals {
   dnszone = trimsuffix(var.dnszone, ".")
 }
 
 # Generate Let's Encrypt
-provider "acme" {
-  server_url = "https://acme-v02.api.letsencrypt.org/directory"
-}
-
-resource "tls_private_key" "acme" {
-  algorithm = "RSA"
-}
-
-resource "acme_registration" "tls" {
-  account_key_pem = tls_private_key.acme.private_key_pem
-  email_address   = var.admin_email
-}
-
-resource "acme_certificate" "tls" {
-  account_key_pem = acme_registration.tls.account_key_pem
-  common_name     = "*.${var.region}.${local.dnszone}"
-
-  dns_challenge {
-    provider = "gcloud"
-    config = {
-      GCE_PROJECT = var.project
-    }
-  }
-}
-
 resource "google_compute_ssl_certificate" "default" {
   name_prefix = "${var.region}-glb-cert"
   project     = var.project
   description = "GLB TLS for *.${var.region}.${local.dnszone}"
-  private_key = acme_certificate.tls.private_key_pem
-  certificate = "${acme_certificate.tls.certificate_pem}\n${acme_certificate.tls.issuer_pem}"
+  private_key = file(var.region_tls_priv_key)
+  certificate = file(var.region_tls_cert_chain)
 
   lifecycle {
     create_before_destroy = true

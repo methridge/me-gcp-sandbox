@@ -138,7 +138,7 @@ variable "gcp_health_check_cidr" {
 }
 
 variable "vault_health_check_path" {
-  default     = "/v1/sys/health?activecode=200&standbycode=200&sealedcode=200&uninitcode=200"
+  default     = "/v1/sys/health?perfstandbyok=true&sealedcode=200&uninitcode=200&drsecondarycode=200"
   description = "Health check for Vault servers"
 }
 

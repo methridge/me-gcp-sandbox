@@ -52,6 +52,17 @@ variable "sandbox_ca_key" {
   description = "Sandbox TLS CA Key"
 }
 
+variable "region_tls_priv_key" {
+  type        = string
+  description = "TLS Private Key"
+}
+
+variable "region_tls_cert_chain" {
+  type        = string
+  description = "TLS Public Cert Chain"
+}
+
+
 #
 # Optional with defaults
 #

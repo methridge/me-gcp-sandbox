@@ -25,24 +25,26 @@ resource "local_file" "sandbox_ca_key" {
 
 module "region-1-stack" {
   # source             = "github.com/hashicorp/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
-  source               = "../../modules/region-hashistack"
-  project              = var.project
-  region               = var.region
-  image                = data.google_compute_image.my_image.name
-  machine_type         = var.machine_type
-  network              = data.terraform_remote_state.vpc.outputs.sandbox-network
-  subnetwork           = data.terraform_remote_state.vpc.outputs.sandbox-subnet-region-1
-  allowed_ips          = var.admin_ip
-  custom_tags          = ["${var.username}-sandbox"]
-  dnszone              = data.terraform_remote_state.dns.outputs.sandbox-dnszone-dns-name
-  elk_stack            = var.elk_stack
-  consul_token         = random_uuid.consul_token.result
-  consul_gossip_key    = random_id.consul_gossip_encryption_key.b64_std
-  sandbox_ca_pem       = module.sandbox-ca.sandbox_ca_pem
-  sandbox_ca_key       = module.sandbox-ca.sandbox_ca_key_pem
-  bastion_machine_type = "n1-standard-8"
-  worker_machine_type  = "n1-standard-8"
-  vault_storage        = "consul"
+  source                = "../../modules/region-hashistack"
+  project               = var.project
+  region                = var.region
+  image                 = data.google_compute_image.my_image.name
+  machine_type          = var.machine_type
+  network               = data.terraform_remote_state.vpc.outputs.sandbox-network
+  subnetwork            = data.terraform_remote_state.vpc.outputs.sandbox-subnet-region-1
+  allowed_ips           = var.admin_ip
+  custom_tags           = ["${var.username}-sandbox"]
+  dnszone               = data.terraform_remote_state.dns.outputs.sandbox-dnszone-dns-name
+  elk_stack             = var.elk_stack
+  consul_token          = random_uuid.consul_token.result
+  consul_gossip_key     = random_id.consul_gossip_encryption_key.b64_std
+  sandbox_ca_pem        = module.sandbox-ca.sandbox_ca_pem
+  sandbox_ca_key        = module.sandbox-ca.sandbox_ca_key_pem
+  region_tls_priv_key   = var.region_tls_priv_key
+  region_tls_cert_chain = var.region_tls_cert_chain
+  bastion_machine_type  = "n1-standard-8"
+  worker_machine_type   = "n1-standard-8"
+  vault_storage         = "consul"
   # consul_enable_non_voting = true
   # vault_cluster_size       = 3
 }
