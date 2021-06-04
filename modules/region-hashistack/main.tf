@@ -10,8 +10,12 @@ data "google_compute_zones" "zones" {
 ###
 ### Region Config Storage Bucket
 ###
+resource "random_id" "bucket_id" {
+  byte_length = 4
+}
+
 resource "google_storage_bucket" "config_bucket" {
-  name                        = "${var.region}-config-bucket"
+  name                        = "${var.region}-config-bucket-${random_id.bucket_id.hex}"
   location                    = upper(var.region)
   force_destroy               = true
   project                     = var.project
@@ -392,4 +396,15 @@ module "global-https-lb" {
   ip_allow_list         = var.allowed_ips
   admin_email           = "methridge@hashicorp.com"
   dnszone               = var.dnszone
+}
+
+module "region-dns" {
+  source     = "../region-dns"
+  project    = var.project
+  region     = var.region
+  dnszone    = var.dnszone
+  zone-name  = var.zone_link
+  bastion-ip = google_compute_instance.region_bastion.network_interface.0.access_config.0.nat_ip
+  lb-ip      = google_compute_address.region-pub-ip.address
+  glb-ip     = module.global-https-lb.region-lb-global-ip
 }

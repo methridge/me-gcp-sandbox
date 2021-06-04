@@ -7,8 +7,8 @@ resource "google_compute_ssl_certificate" "default" {
   name_prefix = "${var.region}-glb-cert"
   project     = var.project
   description = "GLB TLS for *.${var.region}.${local.dnszone}"
-  private_key = file(var.region_tls_priv_key)
-  certificate = file(var.region_tls_cert_chain)
+  private_key = var.region_tls_priv_key
+  certificate = var.region_tls_cert_chain
 
   lifecycle {
     create_before_destroy = true

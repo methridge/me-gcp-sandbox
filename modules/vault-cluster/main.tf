@@ -90,7 +90,7 @@ resource "google_compute_region_instance_group_manager" "vault" {
     minimal_action               = "REPLACE"
     max_surge_fixed              = (var.cluster_size >= length(data.google_compute_zones.available.names)) ? var.cluster_size : length(data.google_compute_zones.available.names)
     max_unavailable_fixed        = 0
-    min_ready_sec                = var.health_check_delay
+    # min_ready_sec                = var.health_check_delay
   }
 
   target_pools = var.instance_group_target_pools

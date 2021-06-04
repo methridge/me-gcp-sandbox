@@ -27,3 +27,12 @@ data "terraform_remote_state" "dns" {
   }
 }
 
+data "terraform_remote_state" "ssl" {
+  backend = "remote"
+  config = {
+    organization = "methridge"
+    workspaces = {
+      name = "me-gcp-sandbox-ssl"
+    }
+  }
+}

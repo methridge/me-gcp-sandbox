@@ -32,6 +32,12 @@ variable "dnszone" {
   description = "DNS Zone name for LB"
 }
 
+
+variable "zone_link" {
+  type        = string
+  description = "GCP Zone Object Self-link"
+}
+
 variable "consul_token" {
   type        = string
   description = "Consul Master Token"

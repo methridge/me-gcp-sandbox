@@ -11,3 +11,6 @@ variable "elk_stack" {}
 variable "consul_enable_non_voting" {}
 variable "region_tls_priv_key" {}
 variable "region_tls_cert_chain" {}
+variable "regions" {
+  type = set(string)
+}

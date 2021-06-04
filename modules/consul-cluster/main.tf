@@ -54,7 +54,7 @@ resource "google_compute_region_instance_group_manager" "consul_server" {
     minimal_action               = "REPLACE"
     max_surge_fixed              = var.enable_non_voting ? (var.cluster_size * 2) : var.cluster_size
     max_unavailable_fixed        = 0
-    min_ready_sec                = var.health_check_delay
+    # min_ready_sec                = var.health_check_delay
   }
 
   lifecycle {
