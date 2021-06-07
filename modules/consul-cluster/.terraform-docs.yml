@@ -1,0 +1,10 @@
+sort:
+  enabled: true
+  by: required
+
+settings:
+  anchor: false
+
+output:
+  file: "README.md"
+  mode: inject

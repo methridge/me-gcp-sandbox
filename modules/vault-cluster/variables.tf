@@ -66,12 +66,6 @@ variable "cluster_description" {
   default     = null
 }
 
-variable "assign_public_ip_addresses" {
-  description = "If true, each of the Compute Instances will receive a public IP address and be reachable from the Public Internet (if Firewall rules permit). If false, the Compute Instances will have private IP addresses only. In production, this should be set to false."
-  type        = bool
-  default     = false
-}
-
 variable "network_name" {
   description = "The name of the VPC Network where all resources should be created."
   type        = string
@@ -138,7 +132,7 @@ variable "gcp_health_check_cidr" {
 }
 
 variable "vault_health_check_path" {
-  default     = "/v1/sys/health?activecode=200&standbycode=200&sealedcode=200&uninitcode=200"
+  default     = "/v1/sys/health?perfstandbyok=true&sealedcode=200&uninitcode=200&drsecondarycode=200"
   description = "Health check for Vault servers"
 }
 

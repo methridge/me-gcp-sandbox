@@ -1,6 +1,6 @@
 #!/bin/zsh
 readonly consul_lic_file="/Volumes/GoogleDrive/My Drive/licenses/consul.hclic"
-readonly nomad_lic_file="/Volumes/GoogleDrive/My Drive/licenses/nomad.hclic"
+# readonly nomad_lic_file="/Volumes/GoogleDrive/My Drive/licenses/nomad.hclic"
 readonly vault_lic_file="/Volumes/GoogleDrive/My Drive/licenses/vault.hclic"
 readonly ETC_HOSTS=/etc/hosts
 readonly products=("consul" "nomad" "vault")
@@ -68,6 +68,13 @@ while [[ $? -ne 0 ]]; do
   consul members > /dev/null
 done
 
+consul acl policy create -name 'list-all-nodes' -rules 'node_prefix "" { policy = "read" }'
+consul acl token update -id 00000000-0000-0000-0000-000000000002 -policy-name list-all-nodes -description "Anonymous Token - Can List Nodes"
+consul acl policy create -name 'service-read' -rules 'service_prefix "" { policy = "read" }'
+consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name service-read
+consul acl policy create -name 'operator-read' -rules 'operator = "read"'
+consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name operator-read
+
 export VAULT_ADDR=https://lb.${DNS_ZONE}:8200
 export VAULT_CACERT=.tmp/sandbox-ca.pem
 
@@ -108,16 +115,16 @@ while [[ $? -ne 0 ]]; do
   consul license put $(cat ${consul_lic_file}) > /dev/null
 done
 
-export NOMAD_ADDR=http://lb.${DNS_ZONE}:4646
-export NOMAD_TOKEN=$(sed -n 2,2p .tmp/nomad.txt | cut -d '=' -f 2 | sed 's/ //')
+# export NOMAD_ADDR=http://lb.${DNS_ZONE}:4646
+# export NOMAD_TOKEN=$(sed -n 2,2p .tmp/nomad.txt | cut -d '=' -f 2 | sed 's/ //')
 
-log "INFO" "Licensing Nomad"
-nomad license put ${nomad_lic_file} > /dev/null
-while [[ $? -ne 0 ]]; do
-  sleep 5
-  log "INFO" "Licensing Nomad"
-  nomad license put ${nomad_lic_file} > /dev/null
-done
+# log "INFO" "Licensing Nomad"
+# nomad license put ${nomad_lic_file} > /dev/null
+# while [[ $? -ne 0 ]]; do
+#   sleep 5
+#   log "INFO" "Licensing Nomad"
+#   nomad license put ${nomad_lic_file} > /dev/null
+# done
 
 log "INFO" "Licensing Vault"
 vault write sys/license text=$(cat ${vault_lic_file}) > /dev/null

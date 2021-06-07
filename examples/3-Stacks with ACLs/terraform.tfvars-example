@@ -1,12 +1,23 @@
-username         = "methridge"
-project          = "methridge-sandbox"
-admin_ip         = ["200.200.100.100/32"]
-machine_type     = "n1-standard-1"
-region-name-1    = "us-west1"
-region-name-2    = "us-central1"
-region-name-3    = "us-east1"
-prem_bucket      = "sandbox-bin"
-consul_ent       = true
-vault_ent        = true
-nomad_ent        = true
-elk_stack        = false
+username                 = "awesomeuser"
+project                  = "awesomeuser-sandbox"
+admin_ip                 = ["200.200.200.200/32"]
+machine_type             = "n1-standard-1"
+consul_ent               = true
+vault_ent                = true
+nomad_ent                = true
+elk_stack                = false
+consul_enable_non_voting = true
+region-map = {
+  "us-west1" = {
+    "cidr" = "10.13.0.0/20"
+    "out-dir" = "/Users/awesomeuser/environments/gcp-west"
+  }
+  "us-central1" = {
+    "cidr" = "10.13.16.0/20"
+    "out-dir" = "/Users/awesomeuser/environments/gcp-central"
+  }
+  "us-east1" = {
+    "cidr" = "10.13.32.0/20"
+    "out-dir" = "/Users/awesomeuser/environments/gcp-east"
+  }
+}

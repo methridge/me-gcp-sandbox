@@ -4,12 +4,6 @@ resource "tls_private_key" "sandbox-ca-key" {
   ecdsa_curve = "P256"
 }
 
-# resource "google_storage_bucket_object" "sandbox-ca-key-file" {
-#   name    = "sandbox-ca-key.pem"
-#   bucket  = var.config_bucket
-#   content = tls_private_key.sandbox-ca-key.private_key_pem
-# }
-
 # Create Vault TLS CA Certificate
 resource "tls_self_signed_cert" "sandbox-ca" {
   key_algorithm         = "ECDSA"
@@ -36,9 +30,3 @@ resource "tls_self_signed_cert" "sandbox-ca" {
     "crl_signing"
   ]
 }
-
-# resource "google_storage_bucket_object" "sandbox-ca-file" {
-#   name    = "sandbox-ca.pem"
-#   bucket  = var.config_bucket
-#   content = tls_self_signed_cert.sandbox-ca.cert_pem
-# }

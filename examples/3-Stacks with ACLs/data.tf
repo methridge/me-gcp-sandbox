@@ -3,10 +3,6 @@ data "google_compute_image" "my_image" {
   project = var.project
 }
 
-data "http" "myip" {
-  url = "http://ipv4.icanhazip.com"
-}
-
 data "terraform_remote_state" "vpc" {
   backend = "remote"
   config = {
@@ -27,3 +23,12 @@ data "terraform_remote_state" "dns" {
   }
 }
 
+data "terraform_remote_state" "ssl" {
+  backend = "remote"
+  config = {
+    organization = "methridge"
+    workspaces = {
+      name = "me-gcp-sandbox-ssl"
+    }
+  }
+}

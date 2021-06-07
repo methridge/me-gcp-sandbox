@@ -1,21 +1,23 @@
 variable "project_id" {
-  type    = string
-  default = "methridge-sandbox"
+  type = string
 }
 
 variable "username" {
-  type    = string
-  default = "methridge"
+  type = string
 }
 
 variable "zone" {
-  type    = string
-  default = "us-central1-f"
+  type = string
 }
 
 variable "consul_ent" {
   type    = bool
-  default = true
+  default = false
+}
+
+variable "consul_lic_file" {
+  type    = string
+  default = ""
 }
 
 variable "consul_template_version" {
@@ -35,7 +37,12 @@ variable "envconsul_version" {
 
 variable "nomad_ent" {
   type    = bool
-  default = true
+  default = false
+}
+
+variable "nomad_lic_file" {
+  type    = string
+  default = ""
 }
 
 variable "nomad_version" {
@@ -50,7 +57,12 @@ variable "terraform_version" {
 
 variable "vault_ent" {
   type    = bool
-  default = true
+  default = false
+}
+
+variable "vault_lic_file" {
+  type    = string
+  default = ""
 }
 
 variable "vault_version" {

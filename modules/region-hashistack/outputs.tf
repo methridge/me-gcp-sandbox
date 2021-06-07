@@ -1,14 +1,28 @@
+output "region-bastion-dns" {
+  value = module.region-dns.region-bastion-dns
+}
 output "region-bastion-ip" {
   value = google_compute_instance.region_bastion.network_interface.0.access_config.0.nat_ip
 }
 
+output "region-lb-dns" {
+  value = module.region-dns.region-lb-dns
+}
 output "region-lb-ip" {
   value = google_compute_address.region-pub-ip.address
 }
 
-# output "region-lb-global-ip" {
-#   value = google_compute_global_address.region-global-pub-ip.address
-# }
+output "region-consul-dns" {
+  value = module.region-dns.region-consul-dns
+}
+
+output "region-nomad-dns" {
+  value = module.region-dns.region-nomad-dns
+}
+
+output "region-vault-dns" {
+  value = module.region-dns.region-vault-dns
+}
 
 output "region-lb-global-ip" {
   value = module.global-https-lb.region-lb-global-ip

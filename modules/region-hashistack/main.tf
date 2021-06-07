@@ -1,7 +1,3 @@
-terraform {
-  required_version = ">= 0.15"
-}
-
 data "google_compute_zones" "zones" {
   project = var.project
   region  = var.region
@@ -10,8 +6,12 @@ data "google_compute_zones" "zones" {
 ###
 ### Region Config Storage Bucket
 ###
+resource "random_id" "bucket_id" {
+  byte_length = 4
+}
+
 resource "google_storage_bucket" "config_bucket" {
-  name                        = "${var.region}-config-bucket"
+  name                        = "${var.region}-config-bucket-${random_id.bucket_id.hex}"
   location                    = upper(var.region)
   force_destroy               = true
   project                     = var.project
@@ -22,12 +22,19 @@ resource "google_storage_bucket" "config_bucket" {
 ### Region Bastion Host
 ###
 resource "google_compute_instance" "region_bastion" {
-  name                    = "${var.region}-sandbox-bastion"
-  machine_type            = var.bastion_machine_type
-  project                 = var.project
-  zone                    = data.google_compute_zones.zones.names[0]
-  metadata_startup_script = data.template_file.region_bastion_startup_script.rendered
-  tags                    = var.custom_tags
+  name         = "${var.region}-sandbox-bastion"
+  machine_type = var.bastion_machine_type
+  project      = var.project
+  zone         = data.google_compute_zones.zones.names[0]
+  metadata_startup_script = templatefile(
+    "${path.module}/templates/bastion.sh.tmpl",
+    { config_bucket           = google_storage_bucket.config_bucket.name,
+      consul_mode             = var.consul_mode,
+      consul_cluster_tag_name = "${var.region}-consul-servers",
+      elk_stack               = var.elk_stack,
+    }
+  )
+  tags = var.custom_tags
   boot_disk {
     initialize_params {
       image = var.image
@@ -43,17 +50,6 @@ resource "google_compute_instance" "region_bastion" {
     email  = null
     scopes = ["userinfo-email", "compute-ro", "storage-ro"]
   }
-}
-
-data "template_file" "region_bastion_startup_script" {
-  template = file("${path.module}/templates/bastion.sh.tmpl")
-  vars = {
-    config_bucket           = google_storage_bucket.config_bucket.name
-    consul_mode             = var.consul_mode
-    consul_cluster_tag_name = "${var.region}-consul-servers"
-    elk_stack               = var.elk_stack
-  }
-  depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
 
 ###
@@ -94,25 +90,22 @@ module "region_consul_cluster" {
   cluster_size                  = var.consul_cluster_size
   enable_non_voting             = var.consul_enable_non_voting
   source_image                  = var.image
-  startup_script                = data.template_file.region-consul-server-startup-script.rendered
   network_name                  = var.network
   subnetwork_name               = var.subnetwork
   allowed_inbound_tags_http_api = var.custom_tags
   allowed_inbound_tags_dns      = var.custom_tags
   custom_tags                   = var.custom_tags
   instance_group_target_pools   = [module.region-consul-lb.target_pool]
-}
-
-data "template_file" "region-consul-server-startup-script" {
-  template = file("${path.module}/templates/consul-server.sh.tmpl")
-  vars = {
-    config_bucket               = google_storage_bucket.config_bucket.name
-    consul_mode                 = "server"
-    consul_cluster_tag_name     = "${var.region}-consul-servers"
-    consul_cluster_wan_tag_name = var.consul_wan_tag
-    consul_primary_dc           = var.consul_primary_dc
-  }
-  depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
+  startup_script = templatefile(
+    "${path.module}/templates/consul-server.sh.tmpl",
+    {
+      config_bucket               = google_storage_bucket.config_bucket.name
+      consul_mode                 = "server"
+      consul_cluster_tag_name     = "${var.region}-consul-servers"
+      consul_cluster_wan_tag_name = var.consul_wan_tag
+      consul_primary_dc           = var.consul_primary_dc
+    }
+  )
 }
 
 ###
@@ -129,26 +122,23 @@ module "region_nomad_servers" {
   network_name                = var.network
   subnetwork_name             = var.subnetwork
   source_image                = var.image
-  startup_script              = data.template_file.region_startup_script_nomad_server.rendered
   custom_tags                 = compact(concat(var.custom_tags, [var.nomad_server_join_tag]))
   allowed_inbound_tags_http   = var.custom_tags
   allowed_inbound_tags_rpc    = var.custom_tags
   allowed_inbound_tags_serf   = var.custom_tags
   instance_group_target_pools = [module.region-nomad-lb.target_pool]
-}
-
-data "template_file" "region_startup_script_nomad_server" {
-  template = file("${path.module}/templates/nomad-server.sh.tmpl")
-  vars = {
-    config_bucket           = google_storage_bucket.config_bucket.name
-    consul_mode             = var.consul_mode
-    consul_cluster_tag_name = "${var.region}-consul-servers"
-    nomad_mode              = "server"
-    nomad_num_servers       = var.nomad_server_cluster_size
-    nomad_cluster_tag_name  = var.nomad_cluster_tag_name
-    nomad_acl_enabled       = var.nomad_acl_enabled
-  }
-  depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
+  startup_script = templatefile(
+    "${path.module}/templates/nomad-server.sh.tmpl",
+    {
+      config_bucket           = google_storage_bucket.config_bucket.name
+      consul_mode             = var.consul_mode
+      consul_cluster_tag_name = "${var.region}-consul-servers"
+      nomad_mode              = "server"
+      nomad_num_servers       = var.nomad_server_cluster_size
+      nomad_cluster_tag_name  = var.nomad_cluster_tag_name
+      nomad_acl_enabled       = var.nomad_acl_enabled
+    }
+  )
 }
 
 module "region_nomad_clients" {
@@ -162,29 +152,26 @@ module "region_nomad_clients" {
   network_name              = var.network
   subnetwork_name           = var.subnetwork
   source_image              = var.image
-  startup_script            = data.template_file.region_startup_script_nomad_client.rendered
   custom_tags               = var.custom_tags
   allowed_inbound_tags_http = var.custom_tags
   allowed_inbound_tags_rpc  = var.custom_tags
   allowed_inbound_tags_serf = var.custom_tags
+  startup_script = templatefile(
+    "${path.module}/templates/nomad-client.sh.tmpl",
+    {
+      config_bucket           = google_storage_bucket.config_bucket.name
+      consul_mode             = var.consul_mode
+      consul_cluster_tag_name = "${var.region}-consul-servers"
+      nomad_mode              = "client"
+      nomad_num_servers       = var.nomad_client_cluster_size
+      nomad_cluster_tag_name  = var.nomad_cluster_tag_name
+      nomad_acl_enabled       = var.nomad_acl_enabled
+    }
+  )
   # instance_group_target_pools = [
   #   module.region-traefik-lb.target_pool,
   #   module.region-traefik-admin-lb.target_pool
   # ]
-}
-
-data "template_file" "region_startup_script_nomad_client" {
-  template = file("${path.module}/templates/nomad-client.sh.tmpl")
-  vars = {
-    config_bucket           = google_storage_bucket.config_bucket.name
-    consul_mode             = var.consul_mode
-    consul_cluster_tag_name = "${var.region}-consul-servers"
-    nomad_mode              = "client"
-    nomad_num_servers       = var.nomad_client_cluster_size
-    nomad_cluster_tag_name  = var.nomad_cluster_tag_name
-    nomad_acl_enabled       = var.nomad_acl_enabled
-  }
-  depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
 }
 
 ###
@@ -239,28 +226,25 @@ module "region_vault_cluster" {
   cluster_tag_name                = "${var.region}-vault-servers"
   machine_type                    = var.machine_type
   source_image                    = var.image
-  startup_script                  = data.template_file.region_startup_script_vault.rendered
   allowed_inbound_cidr_blocks_api = var.allowed_ips
   allowed_inbound_tags_api        = var.custom_tags
   custom_tags                     = var.custom_tags
   service_account_email           = data.google_compute_default_service_account.vault_test.email
   service_account_scopes          = ["cloud-platform"]
   instance_group_target_pools     = [module.region-vault-lb.target_pool]
-}
-
-data "template_file" "region_startup_script_vault" {
-  template = file("${path.module}/templates/vault-server.sh.tmpl")
-  vars = {
-    config_bucket                     = google_storage_bucket.config_bucket.name
-    consul_mode                       = var.consul_mode
-    consul_cluster_tag_name           = "${var.region}-consul-servers"
-    vault_storage                     = var.vault_storage
-    vault_auto_unseal_key_project_id  = var.project
-    vault_auto_unseal_key_region      = var.region
-    vault_auto_unseal_key_ring        = google_kms_key_ring.region_vault_key_ring.name
-    vault_auto_unseal_crypto_key_name = google_kms_crypto_key.region_crypto_key.name
-  }
-  depends_on = [module.region_consul_tls.consul_gossip_encryption_key]
+  startup_script = templatefile(
+    "${path.module}/templates/vault-server.sh.tmpl",
+    {
+      config_bucket                     = google_storage_bucket.config_bucket.name
+      consul_mode                       = var.consul_mode
+      consul_cluster_tag_name           = "${var.region}-consul-servers"
+      vault_storage                     = var.vault_storage
+      vault_auto_unseal_key_project_id  = var.project
+      vault_auto_unseal_key_region      = var.region
+      vault_auto_unseal_key_ring        = google_kms_key_ring.region_vault_key_ring.name
+      vault_auto_unseal_crypto_key_name = google_kms_crypto_key.region_crypto_key.name
+    }
+  )
 }
 
 ###
@@ -378,16 +362,29 @@ module "region-nomad-lb" {
 # }
 
 module "global-https-lb" {
-  source        = "../region-glb"
-  project       = var.project
-  region        = var.region
-  consul_ig     = module.region_consul_cluster.instance_group_instance_group
-  consul_hc     = module.region_consul_cluster.cluster_health_check
-  nomad_ig      = module.region_nomad_servers.instance_group_instance_group
-  nomad_hc      = module.region_nomad_servers.cluster_health_check
-  vault_ig      = module.region_vault_cluster.instance_group_instance_group
-  vault_hc      = module.region_vault_cluster.cluster_health_check
-  ip_allow_list = var.allowed_ips
-  admin_email   = "methridge@hashicorp.com"
-  dnszone       = var.dnszone
+  source                = "../region-glb"
+  project               = var.project
+  region                = var.region
+  region_tls_priv_key   = var.region_tls_priv_key
+  region_tls_cert_chain = var.region_tls_cert_chain
+  consul_ig             = module.region_consul_cluster.instance_group_instance_group
+  consul_hc             = module.region_consul_cluster.cluster_health_check
+  nomad_ig              = module.region_nomad_servers.instance_group_instance_group
+  nomad_hc              = module.region_nomad_servers.cluster_health_check
+  vault_ig              = module.region_vault_cluster.instance_group_instance_group
+  vault_hc              = module.region_vault_cluster.cluster_health_check
+  ip_allow_list         = var.allowed_ips
+  admin_email           = "methridge@hashicorp.com"
+  dnszone               = var.dnszone
+}
+
+module "region-dns" {
+  source     = "../region-dns"
+  project    = var.project
+  region     = var.region
+  dnszone    = var.dnszone
+  zone-name  = var.zone_link
+  bastion-ip = google_compute_instance.region_bastion.network_interface.0.access_config.0.nat_ip
+  lb-ip      = google_compute_address.region-pub-ip.address
+  glb-ip     = module.global-https-lb.region-lb-global-ip
 }

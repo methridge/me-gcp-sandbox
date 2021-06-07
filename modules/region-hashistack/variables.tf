@@ -32,6 +32,12 @@ variable "dnszone" {
   description = "DNS Zone name for LB"
 }
 
+
+variable "zone_link" {
+  type        = string
+  description = "GCP Zone Object Self-link"
+}
+
 variable "consul_token" {
   type        = string
   description = "Consul Master Token"
@@ -51,6 +57,17 @@ variable "sandbox_ca_key" {
   type        = string
   description = "Sandbox TLS CA Key"
 }
+
+variable "region_tls_priv_key" {
+  type        = string
+  description = "TLS Private Key"
+}
+
+variable "region_tls_cert_chain" {
+  type        = string
+  description = "TLS Public Cert Chain"
+}
+
 
 #
 # Optional with defaults
