@@ -4,3 +4,7 @@ sort:
 
 settings:
   anchor: false
+
+output:
+  file: "README.md"
+  mode: inject

@@ -1,11 +1,10 @@
-# My HashiCorp Google Cloud Sandbox
+# Doc Stub
 
-This repository contains a series of Terraform configurations that can be used
-to build a "HashiStack" in a single or multiple regions
+This repository contains
 
 ## Auto Gen
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -61,4 +60,4 @@ No modules.
 | Name | Description |
 |------|-------------|
 | region-lb-global-ip | n/a |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
