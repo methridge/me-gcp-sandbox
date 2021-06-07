@@ -10,7 +10,7 @@ module "sandbox-ca" {
 
 module "region-stack" {
   for_each = var.region-map
-  # source             = "github.com/hashicorp/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
+  # source             = "github.com/methridge/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
   source                = "../../modules/region-hashistack"
   project               = var.project
   region                = each.key

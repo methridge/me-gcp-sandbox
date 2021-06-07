@@ -5,17 +5,15 @@ variable "machine_type" {}
 variable "consul_ent" {}
 variable "vault_ent" {}
 variable "nomad_ent" {}
-variable "region-name-1" {}
-variable "region-name-2" {}
-variable "region-name-3" {}
 variable "elk_stack" {}
 variable "consul_enable_non_voting" {}
-variable "region_1_output" {}
-variable "region_1_tls_priv_key" {}
-variable "region_1_tls_cert_chain" {}
-variable "region_2_output" {}
-variable "region_2_tls_priv_key" {}
-variable "region_2_tls_cert_chain" {}
-variable "region_3_output" {}
-variable "region_3_tls_priv_key" {}
-variable "region_3_tls_cert_chain" {}
+variable "region-map" {
+  description = "Object Map of Regions (key) with CIDR block IP range and output directory items."
+  type = map(
+    object({
+      cidr    = string
+      name    = string
+      out-dir = string
+    })
+  )
+}
