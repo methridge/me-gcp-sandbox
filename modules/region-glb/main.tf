@@ -2,7 +2,7 @@ locals {
   dnszone = trimsuffix(var.dnszone, ".")
 }
 
-# Generate Let's Encrypt
+# Generate SSL cert for LB
 resource "google_compute_ssl_certificate" "default" {
   name_prefix = "${var.region}-glb-cert"
   project     = var.project

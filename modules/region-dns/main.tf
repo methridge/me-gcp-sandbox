@@ -1,5 +1,4 @@
-
-resource "google_dns_record_set" "region-1-bastion" {
+resource "google_dns_record_set" "region-bastion" {
   project      = var.project
   name         = "bastion.${var.region}.${var.dnszone}"
   type         = "A"
@@ -8,7 +7,7 @@ resource "google_dns_record_set" "region-1-bastion" {
   rrdatas      = [var.bastion-ip]
 }
 
-resource "google_dns_record_set" "region-1-lb" {
+resource "google_dns_record_set" "region-lb" {
   project      = var.project
   name         = "lb.${var.region}.${var.dnszone}"
   type         = "A"
@@ -17,7 +16,7 @@ resource "google_dns_record_set" "region-1-lb" {
   rrdatas      = [var.lb-ip]
 }
 
-resource "google_dns_record_set" "region-1-consul" {
+resource "google_dns_record_set" "region-consul" {
   project      = var.project
   name         = "consul.${var.region}.${var.dnszone}"
   type         = "A"
@@ -26,7 +25,7 @@ resource "google_dns_record_set" "region-1-consul" {
   rrdatas      = [var.glb-ip]
 }
 
-resource "google_dns_record_set" "region-1-nomad" {
+resource "google_dns_record_set" "region-nomad" {
   project      = var.project
   name         = "nomad.${var.region}.${var.dnszone}"
   type         = "A"
@@ -35,7 +34,7 @@ resource "google_dns_record_set" "region-1-nomad" {
   rrdatas      = [var.glb-ip]
 }
 
-resource "google_dns_record_set" "region-1-vault" {
+resource "google_dns_record_set" "region-vault" {
   project      = var.project
   name         = "vault.${var.region}.${var.dnszone}"
   type         = "A"

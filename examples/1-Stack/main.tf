@@ -9,7 +9,7 @@ module "sandbox-ca" {
 }
 
 module "region-stack" {
-  for_each = var.regions
+  for_each = var.region-map
   # source             = "github.com/hashicorp/ea-gcp-sandbox//modules/region-hashistack?ref=add-gcp-example"
   source                = "../../modules/region-hashistack"
   project               = var.project
@@ -37,9 +37,9 @@ module "region-stack" {
 }
 
 module "files-out" {
-  for_each              = var.regions
+  for_each              = var.region-map
   source                = "../../modules/files-out"
-  region_output         = var.region_output
+  region_output         = each.value["out-dir"]
   consul_token          = random_uuid.consul_token.result
   consul_server_pem     = module.region-stack[each.key].consul_server_pem
   consul_server_pem_key = module.region-stack[each.key].consul_server_key_pem
@@ -53,10 +53,10 @@ module "files-out" {
 
 
 resource "null_resource" "stack-init" {
-  for_each = var.regions
+  for_each = var.region-map
   provisioner "local-exec" {
     command     = "${path.cwd}/../../scripts/stack-init.sh"
-    working_dir = var.region_output
+    working_dir = each.value["out-dir"]
     environment = {
       LB_IP    = module.region-stack[each.key].region-lb-ip
       GLB_IP   = module.region-stack[each.key].region-lb-global-ip

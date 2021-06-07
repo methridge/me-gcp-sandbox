@@ -3,10 +3,6 @@ data "google_compute_image" "my_image" {
   project = var.project
 }
 
-data "http" "myip" {
-  url = "http://ipv4.icanhazip.com"
-}
-
 data "terraform_remote_state" "vpc" {
   backend = "remote"
   config = {
