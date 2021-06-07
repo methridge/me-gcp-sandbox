@@ -96,8 +96,12 @@ vault_lic_file  = "/Volumes/GoogleDrive/My Drive/licenses/vault.hclic"
 
 Build image with `packer build -force .` while in the `packer` directory.
 
-# Auto Gen
+## Examples
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+Single stack example `./examples/1-Stack`
 
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+Three region stack `./examples/3-Stacks`
+
+Three region stack (isolated) `./examples/3-Stacks No Auto`
+
+Three region stack with Nomad ACLs `./examples/3-Stacks with ACLs`
