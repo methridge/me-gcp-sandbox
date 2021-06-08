@@ -3,25 +3,38 @@ locals {
 }
 
 # Generate SSL cert for LB
-resource "google_compute_managed_ssl_certificate" "default" {
-  name    = "${var.region}-glb-cert"
-  project = var.project
+resource "google_compute_ssl_certificate" "default" {
+  name_prefix = "${var.region}-glb-cert"
+  project     = var.project
+  description = "GLB TLS for *.${var.region}.${local.dnszone}"
+  private_key = var.region_tls_priv_key
+  certificate = var.region_tls_cert_chain
 
-  managed {
-    domains = [
-      "consul.${var.region}.${var.dnszone}",
-      "nomad.${var.region}.${var.dnszone}",
-      "vault.${var.region}.${var.dnszone}"
-    ]
+  lifecycle {
+    create_before_destroy = true
   }
 }
+
+# resource "google_compute_managed_ssl_certificate" "default" {
+#   name    = "${var.region}-glb-cert"
+#   project = var.project
+
+#   managed {
+#     domains = [
+#       "consul.${var.region}.${var.dnszone}",
+#       "nomad.${var.region}.${var.dnszone}",
+#       "vault.${var.region}.${var.dnszone}"
+#     ]
+#   }
+# }
 
 resource "google_compute_target_https_proxy" "region_proxy" {
   name             = "${var.region}-https-proxy"
   project          = var.project
   url_map          = google_compute_url_map.region-url-map.id
-  ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
   ssl_policy       = google_compute_ssl_policy.ssl.self_link
+  ssl_certificates = [google_compute_ssl_certificate.default.id]
+  # ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
 }
 
 resource "google_compute_url_map" "region-url-map" {
@@ -126,18 +139,6 @@ resource "google_compute_global_forwarding_rule" "https-app" {
   target     = google_compute_target_https_proxy.region_proxy.id
   port_range = "443"
 }
-
-# resource "google_compute_ssl_certificate" "default" {
-#   name_prefix = "${var.region}-glb-cert"
-#   project     = var.project
-#   description = "GLB TLS for *.${var.region}.${local.dnszone}"
-#   private_key = var.region_tls_priv_key
-#   certificate = var.region_tls_cert_chain
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
 
 # TLS Security Policy
 resource "google_compute_security_policy" "security-policy-1" {
