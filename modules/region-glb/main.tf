@@ -3,17 +3,29 @@ locals {
 }
 
 # Generate SSL cert for LB
-resource "google_compute_ssl_certificate" "default" {
-  name_prefix = "${var.region}-glb-cert"
-  project     = var.project
-  description = "GLB TLS for *.${var.region}.${local.dnszone}"
-  private_key = var.region_tls_priv_key
-  certificate = var.region_tls_cert_chain
+resource "google_compute_managed_ssl_certificate" "default" {
+  name    = "${var.region}-glb-cert"
+  project = var.project
 
-  lifecycle {
-    create_before_destroy = true
+  managed {
+    domains = [
+      "consul.${var.region}.${var.dnszone}",
+      "nomad.${var.region}.${var.dnszone}",
+      "vault.${var.region}.${var.dnszone}"
+    ]
   }
 }
+# resource "google_compute_ssl_certificate" "default" {
+#   name_prefix = "${var.region}-glb-cert"
+#   project     = var.project
+#   description = "GLB TLS for *.${var.region}.${local.dnszone}"
+#   private_key = var.region_tls_priv_key
+#   certificate = var.region_tls_cert_chain
+
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
 # TLS Security Policy
 resource "google_compute_security_policy" "security-policy-1" {
@@ -56,7 +68,7 @@ resource "google_compute_security_policy" "security-policy-1" {
 resource "google_compute_ssl_policy" "ssl" {
   name            = "${var.region}-ssl-pol"
   project         = var.project
-  profile         = "RESTRICTED"
+  profile         = "MODERN"
   min_tls_version = "TLS_1_2"
 }
 
@@ -115,8 +127,6 @@ resource "google_compute_backend_service" "vault_be" {
   security_policy = google_compute_security_policy.security-policy-1.self_link
 }
 
-
-
 resource "google_compute_url_map" "region-url-map" {
   name        = "${var.region}-urlmap"
   project     = var.project
@@ -163,7 +173,7 @@ resource "google_compute_target_https_proxy" "region_proxy" {
   name             = "${var.region}-https-proxy"
   project          = var.project
   url_map          = google_compute_url_map.region-url-map.self_link
-  ssl_certificates = [google_compute_ssl_certificate.default.self_link]
+  ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
   ssl_policy       = google_compute_ssl_policy.ssl.self_link
 }
 
