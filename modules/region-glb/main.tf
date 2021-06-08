@@ -15,49 +15,67 @@ resource "google_compute_ssl_certificate" "default" {
   }
 }
 
-# TLS Security Policy
-resource "google_compute_security_policy" "security-policy-1" {
-  name        = "${var.region}-cloudarmor-policy-1"
-  project     = var.project
-  description = "${var.region} Cloud Armor policy"
+# resource "google_compute_managed_ssl_certificate" "default" {
+#   name    = "${var.region}-glb-cert"
+#   project = var.project
 
-  # Whitelist traffic from certain ip address
-  rule {
-    action   = "allow"
-    priority = "100"
+#   managed {
+#     domains = [
+#       "consul.${var.region}.${var.dnszone}",
+#       "nomad.${var.region}.${var.dnszone}",
+#       "vault.${var.region}.${var.dnszone}"
+#     ]
+#   }
+# }
 
-    match {
-      versioned_expr = "SRC_IPS_V1"
-
-      config {
-        src_ip_ranges = var.ip_allow_list
-      }
-    }
-
-    description = "allow traffic from "
-  }
-
-  rule {
-    action   = "deny(403)"
-    priority = "2147483647"
-
-    match {
-      versioned_expr = "SRC_IPS_V1"
-
-      config {
-        src_ip_ranges = ["*"]
-      }
-    }
-
-    description = "Default deny all rule."
-  }
+resource "google_compute_target_https_proxy" "region_proxy" {
+  name             = "${var.region}-https-proxy"
+  project          = var.project
+  url_map          = google_compute_url_map.region-url-map.id
+  ssl_policy       = google_compute_ssl_policy.ssl.self_link
+  ssl_certificates = [google_compute_ssl_certificate.default.id]
+  # ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
 }
 
-resource "google_compute_ssl_policy" "ssl" {
-  name            = "${var.region}-ssl-pol"
-  project         = var.project
-  profile         = "RESTRICTED"
-  min_tls_version = "TLS_1_2"
+resource "google_compute_url_map" "region-url-map" {
+  name        = "${var.region}-urlmap"
+  project     = var.project
+  description = "${var.region} HashiStack Enterprise"
+
+  default_url_redirect {
+    host_redirect = "https://hashicorp.com"
+    strip_query   = true
+  }
+
+  host_rule {
+    hosts        = ["consul.${var.region}.${local.dnszone}"]
+    path_matcher = "consul"
+  }
+
+  host_rule {
+    hosts        = ["nomad.${var.region}.${local.dnszone}"]
+    path_matcher = "nomad"
+  }
+
+  host_rule {
+    hosts        = ["vault.${var.region}.${local.dnszone}"]
+    path_matcher = "vault"
+  }
+
+  path_matcher {
+    name            = "consul"
+    default_service = google_compute_backend_service.consul_be.id
+  }
+
+  path_matcher {
+    name            = "nomad"
+    default_service = google_compute_backend_service.nomad_be.id
+  }
+
+  path_matcher {
+    name            = "vault"
+    default_service = google_compute_backend_service.vault_be.id
+  }
 }
 
 # Backend Services
@@ -115,68 +133,54 @@ resource "google_compute_backend_service" "vault_be" {
   security_policy = google_compute_security_policy.security-policy-1.self_link
 }
 
-
-
-resource "google_compute_url_map" "region-url-map" {
-  name        = "${var.region}-urlmap"
-  project     = var.project
-  description = "${var.region} HashiStack Enterprise"
-
-  # default_service = google_compute_backend_service.application.self_link
-  default_url_redirect {
-    host_redirect = "https://hashicorp.com"
-    strip_query   = true
-  }
-
-  host_rule {
-    hosts        = ["consul.${var.region}.${local.dnszone}"]
-    path_matcher = "consul"
-  }
-
-  host_rule {
-    hosts        = ["nomad.${var.region}.${local.dnszone}"]
-    path_matcher = "nomad"
-  }
-
-  host_rule {
-    hosts        = ["vault.${var.region}.${local.dnszone}"]
-    path_matcher = "vault"
-  }
-
-  path_matcher {
-    name            = "consul"
-    default_service = google_compute_backend_service.consul_be.self_link
-  }
-
-  path_matcher {
-    name            = "nomad"
-    default_service = google_compute_backend_service.nomad_be.self_link
-  }
-
-  path_matcher {
-    name            = "vault"
-    default_service = google_compute_backend_service.vault_be.self_link
-  }
-}
-
-resource "google_compute_target_https_proxy" "region_proxy" {
-  name             = "${var.region}-https-proxy"
-  project          = var.project
-  url_map          = google_compute_url_map.region-url-map.self_link
-  ssl_certificates = [google_compute_ssl_certificate.default.self_link]
-  ssl_policy       = google_compute_ssl_policy.ssl.self_link
-}
-
-resource "google_compute_global_address" "region-global-pub-ip" {
-  name    = "${var.region}-global-pub-ip"
-  project = var.project
-}
-
 resource "google_compute_global_forwarding_rule" "https-app" {
-  name                  = "${var.region}-https-app"
-  project               = var.project
-  ip_address            = google_compute_global_address.region-global-pub-ip.address
-  target                = google_compute_target_https_proxy.region_proxy.self_link
-  port_range            = "443"
-  load_balancing_scheme = "EXTERNAL"
+  name       = "${var.region}-https-app"
+  project    = var.project
+  target     = google_compute_target_https_proxy.region_proxy.id
+  port_range = "443"
+}
+
+# TLS Security Policy
+resource "google_compute_security_policy" "security-policy-1" {
+  name        = "${var.region}-cloudarmor-policy-1"
+  project     = var.project
+  description = "${var.region} Cloud Armor policy"
+
+  # Whitelist traffic from certain ip address
+  rule {
+    action   = "allow"
+    priority = "100"
+
+    match {
+      versioned_expr = "SRC_IPS_V1"
+
+      config {
+        src_ip_ranges = var.ip_allow_list
+      }
+    }
+
+    description = "allow traffic from "
+  }
+
+  rule {
+    action   = "deny(403)"
+    priority = "2147483647"
+
+    match {
+      versioned_expr = "SRC_IPS_V1"
+
+      config {
+        src_ip_ranges = ["*"]
+      }
+    }
+
+    description = "Default deny all rule."
+  }
+}
+
+resource "google_compute_ssl_policy" "ssl" {
+  name            = "${var.region}-ssl-pol"
+  project         = var.project
+  profile         = "MODERN"
+  min_tls_version = "TLS_1_2"
 }

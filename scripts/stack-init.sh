@@ -61,6 +61,10 @@ if [[ -f .tmp/consul.txt ]]; then
 fi
 
 log "INFO" "Checking for Consul Mebers list"
+while true; do
+    curl -s ${CONSUL_HTTP_ADDR}/v1/catalog/service/consul | jq -e . && break
+    sleep 5
+done
 consul members > /dev/null
 while [[ $? -ne 0 ]]; do
   sleep 5
