@@ -278,21 +278,25 @@ module "region-consul-lb" {
 }
 
 module "region-vault-lb" {
-  source     = "github.com/GoogleCloudPlatform/terraform-google-lb"
-  project    = var.project
-  region     = var.region
-  name       = "${var.region}-vault-lb"
-  network    = var.network
-  ip_address = google_compute_address.region-pub-ip.address
-  health_check = {
-    check_interval_sec  = 10
-    healthy_threshold   = 5
-    timeout_sec         = 5
-    unhealthy_threshold = 10
-    port                = 8200
-    request_path        = "/v1/sys/health?uninitcode=200"
-    host                = "localhost"
-  }
+  # source               = "github.com/GoogleCloudPlatform/terraform-google-lb"
+  source               = "GoogleCloudPlatform/lb/google"
+  version              = "~> 3.0"
+  project              = var.project
+  region               = var.region
+  name                 = "${var.region}-vault-lb"
+  network              = var.network
+  ip_address           = google_compute_address.region-pub-ip.address
+  ip_protocol          = "TCP"
+  disable_health_check = true
+  # health_check = {
+  #   check_interval_sec  = 10
+  #   healthy_threshold   = 5
+  #   timeout_sec         = 5
+  #   unhealthy_threshold = 10
+  #   port                = 8200
+  #   request_path        = "/v1/sys/health?perfstandbyok=true&sealedcode=200&uninitcode=200&drsecondarycode=200"
+  #   host = "localhost"
+  # }
   service_port = 8200
   target_tags  = ["${var.region}-vault-servers"]
   allowed_ips  = var.allowed_ips
