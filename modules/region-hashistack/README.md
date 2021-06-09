@@ -9,17 +9,17 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| google | ~> 3.0 |
-| random | ~> 3.0 |
-| tls | ~> 3.0 |
+| terraform | >= 0.15.0 |
+| google | >= 3.5 |
+| random | >= 3.0 |
+| tls | >= 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| google | 3.71.0 |
-| random | 3.1.0 |
+| google | >= 3.5 |
+| random | >= 3.0 |
 
 ## Modules
 
@@ -29,7 +29,7 @@ This repository contains
 | region-consul-lb | github.com/GoogleCloudPlatform/terraform-google-lb | n/a |
 | region-dns | ../region-dns | n/a |
 | region-nomad-lb | github.com/GoogleCloudPlatform/terraform-google-lb | n/a |
-| region-vault-lb | github.com/GoogleCloudPlatform/terraform-google-lb | n/a |
+| region-vault-lb | GoogleCloudPlatform/lb/google | ~> 3.0 |
 | region\_consul\_cluster | ../consul-cluster | n/a |
 | region\_consul\_tls | ../consul-tls | n/a |
 | region\_nomad\_clients | ../nomad-cluster | n/a |

@@ -9,14 +9,14 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| google | ~> 3.0 |
+| terraform | >= 0.15.0 |
+| google | >= 3.5 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| google | 3.71.0 |
+| google | >= 3.5 |
 
 ## Modules
 
@@ -29,7 +29,6 @@ No modules.
 | [google_compute_backend_service.consul_be](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
 | [google_compute_backend_service.nomad_be](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
 | [google_compute_backend_service.vault_be](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
-| [google_compute_global_address.region-global-pub-ip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_address) | resource |
 | [google_compute_global_forwarding_rule.https-app](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_forwarding_rule) | resource |
 | [google_compute_security_policy.security-policy-1](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_security_policy) | resource |
 | [google_compute_ssl_certificate.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_ssl_certificate) | resource |

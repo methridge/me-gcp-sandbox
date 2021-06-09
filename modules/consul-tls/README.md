@@ -9,18 +9,18 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| google | ~> 3.0 |
-| random | ~> 3.0 |
-| tls | ~> 3.0 |
+| terraform | >= 0.15.0 |
+| google | >= 3.5 |
+| random | >= 3.0 |
+| tls | >= 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| google | 3.70.0 |
-| random | 3.1.0 |
-| tls | 3.1.0 |
+| google | >= 3.5 |
+| random | >= 3.0 |
+| tls | >= 3.0 |
 
 ## Modules
 

@@ -9,14 +9,14 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| google | ~> 3.0 |
+| terraform | >= 0.15.0 |
+| google | >= 3.5 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| google | 3.70.0 |
+| google | >= 3.5 |
 
 ## Modules
 

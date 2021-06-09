@@ -9,14 +9,14 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| local | ~> 2.0 |
+| terraform | >= 0.15.0 |
+| local | >= 2.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| local | 2.1.0 |
+| local | >= 2.0 |
 
 ## Modules
 

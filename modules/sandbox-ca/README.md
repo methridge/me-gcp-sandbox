@@ -9,14 +9,14 @@ This repository contains
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.15.0 |
-| tls | ~> 3.0 |
+| terraform | >= 0.15.0 |
+| tls | >= 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| tls | 3.1.0 |
+| tls | >= 3.0 |
 
 ## Modules
 
