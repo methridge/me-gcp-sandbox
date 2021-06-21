@@ -67,7 +67,6 @@ function generate_nomad_config {
 server {
   enabled = true
   bootstrap_expect = $num_servers
-  license_path = "/opt/nomad/lic/nomad.hclic"
   redundancy_zone = "$instance_zone"
 }
 autopilot {

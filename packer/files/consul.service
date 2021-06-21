@@ -9,6 +9,7 @@ ConditionFileNotEmpty=/etc/consul.d/consul.hcl
 Type=notify
 User=consul
 Group=consul
+Environment="CONSUL_LICENSE_PATH=/opt/consul/lic/consul.hclic"
 ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/
 ExecReload=/usr/bin/consul reload
 ExecStop=/usr/bin/consul leave
