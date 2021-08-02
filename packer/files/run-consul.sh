@@ -164,7 +164,9 @@ EOF
 server = true
 bootstrap_expect = $cluster_size
 server_name = "server.${instance_region}.consul"
-ui = true
+ui_config {
+  enabled = true
+}
 
 autopilot {
   redundancy_zone_tag = "zone"
