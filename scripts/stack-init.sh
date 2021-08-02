@@ -1,7 +1,6 @@
 #!/bin/zsh
-readonly consul_lic_file="/Volumes/GoogleDrive/My Drive/licenses/consul.hclic"
-# readonly nomad_lic_file="/Volumes/GoogleDrive/My Drive/licenses/nomad.hclic"
-readonly vault_lic_file="/Volumes/GoogleDrive/My Drive/licenses/vault.hclic"
+readonly mypath=$0:h
+readonly _cwd=${PWD}
 readonly ETC_HOSTS=/etc/hosts
 readonly products=("consul" "nomad" "vault")
 
@@ -31,6 +30,28 @@ function log {
   >&2 echo -e "${bldcyn}${timestamp}${txtrst} [${COL}${level}${txtrst}] ${message}"
 }
 
+# A retry function that attempts to run a command a number of times and returns the output
+function retry {
+  local -r cmd="$1"
+  local -r description="$2"
+
+  for i in $(seq 1 30); do
+    log "INFO" "$description"
+
+    output=$(eval "$cmd") && exit_status=0 || exit_status=$?
+    log "INFO" "$output"
+    if [[ $exit_status -eq 0 ]]; then
+      log "ERROR" "$output"
+      return
+    fi
+    log "INFO" "$description failed. Will sleep for 10 seconds and try again."
+    sleep 10
+  done;
+
+  log "ERROR" "$description failed after 30 attempts."
+  exit $exit_status
+}
+
 function hostUpdate {
   HOSTS_LINE="${1}\t${2}.${DNS_ZONE}"
   if [ -n "$(grep ${2}.${DNS_ZONE} ${ETC_HOSTS})" ]; then
@@ -52,90 +73,30 @@ for product in ${products[@]}; do
   hostUpdate ${GLB_IP} ${product}
 done
 
-export CONSUL_CACERT=.tmp/sandbox-ca.pem
-export CONSUL_CLIENT_CERT=.tmp/consul-client.pem
-export CONSUL_CLIENT_KEY=.tmp/consul-client-key.pem
+export CONSUL_CACERT=${_cwd}/.tmp/sandbox-ca.pem
+export CONSUL_CLIENT_CERT=${_cwd}/.tmp/consul-client.pem
+export CONSUL_CLIENT_KEY=${_cwd}/.tmp/consul-client-key.pem
 export CONSUL_HTTP_ADDR=http://lb.${DNS_ZONE}:8500
-if [[ -f .tmp/consul.txt ]]; then
-  export CONSUL_HTTP_TOKEN=$(< .tmp/consul.txt)
+if [[ -f ${_cwd}/.tmp/consul.txt ]]; then
+  export CONSUL_HTTP_TOKEN=$(< ${_cwd}/.tmp/consul.txt)
 fi
 
-log "INFO" "Checking for Consul Mebers list"
-while true; do
-    curl -s ${CONSUL_HTTP_ADDR}/v1/catalog/service/consul | jq -e . && break
-    sleep 5
-done
-consul members > /dev/null
-while [[ $? -ne 0 ]]; do
-  sleep 5
-  log "INFO" "Checking for Consul Mebers list"
-  consul members > /dev/null
-done
+retry \
+  "consul members" \
+  "Checking for Consul Mebers list"
 
-consul acl policy create -name 'list-all-nodes' -rules 'node_prefix "" { policy = "read" }'
-consul acl token update -id 00000000-0000-0000-0000-000000000002 -policy-name list-all-nodes -description "Anonymous Token - Can List Nodes"
-consul acl policy create -name 'service-read' -rules 'service_prefix "" { policy = "read" }'
-consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name service-read
-consul acl policy create -name 'operator-read' -rules 'operator = "read"'
-consul acl token update -id 00000000-0000-0000-0000-000000000002 --merge-policies -description "Anonymous Token - Can List Nodes" -policy-name operator-read
+consul acl policy create -name 'anonymous-pol' -description "Anonymous Token Policy" -rules @${mypath}/anonymous-acl.hcl
+consul acl token update -id 00000000-0000-0000-0000-000000000002 -policy-name anonymous-pol -description "Anonymous Token Policy"
 
 export VAULT_ADDR=https://lb.${DNS_ZONE}:8200
-export VAULT_CACERT=.tmp/sandbox-ca.pem
+export VAULT_CACERT=${_cwd}/.tmp/sandbox-ca.pem
 
-log "INFO" "Checking Vault status"
-vstatus=$(curl -skI -o /dev/null -w "%{http_code}" $VAULT_ADDR/v1/sys/health)
-while [[ "$vstatus" -ne 501 ]]; do
-  sleep 5
-  log "INFO" "Checking Vault status"
-  vstatus=$(curl -skI -o /dev/null -w "%{http_code}" $VAULT_ADDR/v1/sys/health)
-done
+retry \
+  "vstatus=$(curl -skI -o /dev/null -w "%{http_code}" $VAULT_ADDR/v1/sys/health)" \
+  "Checking Vault status"
 
-log "INFO" "Initializing Vault"
-vault operator init \
-  -key-shares=1 \
-  -key-threshold=1 \
-  -recovery-shares=1 \
-  -recovery-threshold=1 \
-  -format=json > .tmp/vault.json
-
-while [[ $? -ne 0 ]]; do
-  sleep 5
-  log "INFO" "Initializing Vault"
-  vault operator init \
-    -key-shares=1 \
-    -key-threshold=1 \
-    -recovery-shares=1 \
-    -recovery-threshold=1 \
-    -format=json > .tmp/vault.json
-done
-
-export VAULT_TOKEN=$(cat .tmp/vault.json | jq -r ".root_token")
-
-log "INFO" "Licensing Consul"
-consul license put $(cat ${consul_lic_file}) > /dev/null
-while [[ $? -ne 0 ]]; do
-  sleep 5
-  log "INFO" "Licensing Consul"
-  consul license put $(cat ${consul_lic_file}) > /dev/null
-done
-
-# export NOMAD_ADDR=http://lb.${DNS_ZONE}:4646
-# export NOMAD_TOKEN=$(sed -n 2,2p .tmp/nomad.txt | cut -d '=' -f 2 | sed 's/ //')
-
-# log "INFO" "Licensing Nomad"
-# nomad license put ${nomad_lic_file} > /dev/null
-# while [[ $? -ne 0 ]]; do
-#   sleep 5
-#   log "INFO" "Licensing Nomad"
-#   nomad license put ${nomad_lic_file} > /dev/null
-# done
-
-log "INFO" "Licensing Vault"
-vault write sys/license text=$(cat ${vault_lic_file}) > /dev/null
-while [[ $? -ne 0 ]]; do
-  sleep 5
-  log "INFO" "Licensing Vault"
-  vault write sys/license text=$(cat ${vault_lic_file}) > /dev/null
-done
+retry \
+  "vault operator init -key-shares=1 -key-threshold=1 -recovery-shares=1 -recovery-threshold=1 -format=json > .tmp/vault.json" \
+  "Initializing Vault"
 
 log "INFO" "Completed HashiStack initialization"

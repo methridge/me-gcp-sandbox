@@ -39,7 +39,7 @@ function install_dependancies {
   sudo apt-get --quiet --assume-yes install curl unzip jq net-tools docker.io default-jre
 
   # Install CNI
-  curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
+  curl -sSL -o /tmp/cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.9.1/cni-plugins-linux-amd64-v0.9.1.tgz
   sudo mkdir -p /opt/cni/bin
   sudo tar -C /opt/cni/bin -xzf /tmp/cni-plugins.tgz
 
@@ -69,7 +69,6 @@ function create_install_paths {
   log_info "Creating install dirs for $app"
   sudo mkdir --parents /etc/$app.d
   sudo mkdir --parents /opt/$app/data
-  sudo mkdir --parents /opt/$app/lic
   sudo mkdir --parents /opt/$app/log
   sudo mkdir --parents /opt/$app/tls
   sudo chown --recursive $app:$app /opt/$app
@@ -102,7 +101,7 @@ function install_binaries {
   curl --silent --output /tmp/${product}.zip \
   https://releases.hashicorp.com/${product}/${version}/${product}_${version}_linux_amd64.zip
 
-  unzip -d /tmp /tmp/${product}.zip
+  unzip -o -d /tmp /tmp/${product}.zip
 
   log_info "Moving ${product} binary to ${dest_path}"
   sudo mv "/tmp/${product}" "${dest_path}"
@@ -113,8 +112,8 @@ function install_binaries {
 function install_license {
   local product="$1"
 
-  log_info "Placing ${product} license file in /opt/${product}/lic"
-  sudo mv "/tmp/licenses/${product}.hclic" "/opt/${product}/lic/${product}.hclic"
+  log_info "Placing ${product} license file in /etc/${product}.d"
+  sudo mv "/tmp/licenses/${product}.hclic" "/etc/${product}.d/${product}.hclic"
 }
 
 function install_dnsmasq {
@@ -245,7 +244,7 @@ function install {
   log_info "Completed install of additional HashiCorp products"
 
   log_info "Installing Envoy Proxy"
-  install_envoy
+  # install_envoy
   log_info "Completed install of Envoy Proxy"
 
   if [[ $elk_stack == "true" ]]; then

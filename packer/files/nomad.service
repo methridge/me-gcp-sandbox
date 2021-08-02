@@ -7,7 +7,7 @@ After=consul.service
 After=network-online.target
 
 [Service]
-Environment="NOMAD_LICENSE_PATH=/opt/nomad/lic/nomad.hclic"
+Environment="NOMAD_LICENSE_PATH=/etc/nomad.d/nomad.hclic"
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStart=/usr/bin/nomad agent -config /etc/nomad.d
 KillMode=process
