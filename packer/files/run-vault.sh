@@ -94,6 +94,10 @@ seal "gcpckms" {
 
 storage "raft" {
   path = "/opt/vault/data"
+  retry_join {
+    auto_join = "provider=gce region=${instance_region} tag_key=${instance_region}-vault-servers"
+  }
+
 }
 
 service_registration "consul" {
