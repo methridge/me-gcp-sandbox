@@ -20,7 +20,7 @@ SecureBits=keep-caps
 AmbientCapabilities=CAP_IPC_LOCK
 CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
 NoNewPrivileges=yes
-Environment="VAULT_LICENSE_PATH=/opt/vault/lic/vault.hclic"
+Environment="VAULT_LICENSE_PATH=/etc/vault.d/vault.hclic"
 ExecStart=/usr/bin/vault server -config=/etc/vault.d/vault.hcl
 ExecReload=/bin/kill --signal HUP $MAINPID
 KillMode=process
